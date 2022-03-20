@@ -1,0 +1,4 @@
+# https://docs.github.com/en/get-started/getting-started-with-git/configuring-git-to-handle-line-endings
+# Declaring filetypes that Git will force to have CRLF line endings
+*.Rmd text eol=crlf
+*.R text eol=crlf
