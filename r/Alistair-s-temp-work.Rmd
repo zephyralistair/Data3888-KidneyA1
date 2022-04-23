@@ -1,0 +1,56 @@
+---
+title: "Alistair's temp work"
+author: '500331091'
+date: "2022/4/23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+Sys.setlocale(locale = "C")
+library(GEOquery)
+library(tidyverse)
+```
+
+```{r}
+gse1 <- getGEO("GSE129166")
+gse1 <- gse1$GSE129166_series_matrix.txt.gz
+```
+
+TCMR - T cell mediated rejection
+ABMR - Antibody-mediated rejection
+
+```{r}
+gse2 <- getGEO("GSE34748")
+gse2 <- gse2$GSE34748_series_matrix.txt.gz
+```
+
+```{r}
+gse3 <- getGEO("GSE51675")
+gse3 <- gse3$GSE51675_series_matrix.txt.gz
+```
+treatment: Tacrolimus vs Cyclosporine
+gender & age
+
+```{r}
+gse4 <- getGEO("GSE343")
+gse4a <- gse4$`GSE343-GPL271_series_matrix.txt.gz`
+gse4b <- gse4$`GSE343-GPL272_series_matrix.txt.gz`
+```
+
+```{r}
+gse5 <- getGEO("GSE15296")
+gse5 <- gse5$GSE15296_series_matrix.txt.gz
+```
+easy to clean
+
+```{r}
+gse6 <- getGEO("GSE46474")
+gse6 <- gse6$GSE46474_series_matrix.txt.gz
+```
+used in the lab & assignment
+
+```{r}
+gse7 <- getGEO("GSE50084")
+gse7 <- gse7$GSE50084_series_matrix.txt.gz
+```
