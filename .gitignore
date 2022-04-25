@@ -41,3 +41,4 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 r/Alistair-s-temp-work.RData
+r/extra gse.RData
