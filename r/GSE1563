@@ -1,0 +1,72 @@
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE,warning=FALSE}
+library(GEOquery)
+library(Biobase)
+library(tidyverse)
+library(dplyr)
+library(qtlcharts)
+library(stringr)
+library(class)
+library(cvTools)
+```
+
+
+```{r}
+gse_1563 <- getGEO("GSE1563")$'GSE1563_series_matrix.txt.gz'
+df_1563 = pData(gse_1563)
+head(df_1563)
+```
+
+```{r}
+data_1563 = filter(df_1563, 
+                   df_1563$description.1 != "Age: unknown", 
+                   df_1563$description.2 != "Sex: unknown",
+                   df_1563$description.3 != "Immunosupression: none",
+                   df_1563$description.4 != "Histopathology: none",
+                   df_1563$description.5 != "Donor type: NA",
+                   df_1563$description.6 != "Scr (mg/dL): unknown",
+                   df_1563$description.7 != "Days post transplant: NA")
+
+colnames(data_1563)[12] <- 'Clinical status'
+colnames(data_1563)[13] <- 'Age'
+colnames(data_1563)[14] <- 'Sex'
+colnames(data_1563)[15] <- 'Immunosupression'
+colnames(data_1563)[16] <- 'Histopathology'
+colnames(data_1563)[17] <- 'Donor type'
+colnames(data_1563)[18] <- 'Scr(mg/dL)'
+colnames(data_1563)[19] <- 'post transplant(days)'
+colnames(data_1563)[20] <- 'Abbreviations'
+colnames(data_1563)[21] <- 'Keywords'
+
+data_1563$`Clinical status` <- str_replace_all(data_1563$`Clinical status`, "Clinical status: ", "")
+data_1563$Age <- str_replace_all(data_1563$Age, "Age: ", "")
+data_1563$Sex <- str_replace_all(data_1563$Sex, "Sex: ", "")
+data_1563$Immunosupression <- str_replace_all(data_1563$Immunosupression, "Immunosupression: ", "")
+data_1563$Histopathology <- str_replace_all(data_1563$Histopathology, "Histopathology: ", "")
+data_1563$`Donor type` <- str_replace_all(data_1563$`Donor type`, "Donor type: ", "")
+data_1563$`Scr(mg/dL)` = gsub("\\(.*?\\)","",data_1563$`Scr(mg/dL)`)
+data_1563$`Scr(mg/dL)` = str_replace_all(data_1563$`Scr(mg/dL)`, "Scr :", "")
+data_1563$`post transplant(days)` <- str_replace_all(data_1563$`post transplant(days)`, "Days post transplant:","")
+data_1563$Abbreviations <- str_replace_all(data_1563$Abbreviations, "Abbreviations: ", "")
+data_1563$Keywords <- str_replace_all(data_1563$Keywords, "Keywords = ", "")
+
+newdata_1563 <- data_1563[,c(2,12,13,14,15,16,17,18,19,20,21)]
+
+newdata_1563
+```
+
+```{r}
+set.seed(3888)
+
+sample_1563 = newdata_1563[sample(nrow(newdata_1563), 20), ]
+sample_1563
+```
+
+
+```{r}
+table(sample_1563$`Scr(mg/dL)`)
+```

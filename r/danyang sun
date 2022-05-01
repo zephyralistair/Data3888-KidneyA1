@@ -1,0 +1,159 @@
+---
+title: "Project2"
+author: ""
+date: ""
+output: 
+  html_document:
+    toc: true
+    code_folding: hide
+    number_sections: true
+    theme: cosmo
+    highlight: kate
+    toc_float: yes
+---
+```{r message=FALSE, warning=FALSE}
+library(GEOquery) 
+library(R.utils)
+library(reshape2)
+library(ggplot2)
+library(limma)
+library(dplyr)
+library(reshape2)
+library(DT)
+library(preprocessCore)
+library(e1071)
+library(magrittr)
+library(plotly)
+```
+
+# AR
+
+
+
+```{r}
+gse_GSE138043$Outcome <- ifelse(grepl("non-AR",gse_GSE138043$characteristics_ch1) ,"Stable","Rejection")
+
+```
+
+```{r}
+table(gse_GSE138043$Outcome)
+```
+
+```{r}
+eMat = exprs(gse_GSE138043)
+dim(eMat)
+eMat = log2(eMat+1)
+boxplot(eMat) 
+```
+
+```{r}
+design <- model.matrix(~Outcome, data = pData(gse_GSE138043))
+fit <- lmFit(exprs(gse_GSE138043), design)
+fit <- eBayes(fit)
+```
+
+
+```{r}
+
+library(DT)
+tT <- topTable(fit, n = Inf) 
+DT::datatable(round(tT[1:100, ], 2))
+```
+
+```{r}
+df<- topTable(fit, number=nrow(fit), genelist=rownames(gse_13804))
+
+p <- ggplot(df, aes(x = AveExpr, y = logFC))+
+    geom_point(aes(colour=-log10(P.Value)), alpha=1/3, size=1) +
+    scale_colour_gradient(low="blue",high="red")+
+    ylab("log2 fold change") + xlab("Average expression")
+ggplotly(p)
+```
+```{r}
+p <- ggplot(df, aes(df$logFC,-log10(P.Value)))+
+    geom_point(aes(colour=-log10(P.Value)), alpha=1/3, size=1) +
+    scale_colour_gradient(low="blue",high="red")+
+    xlab("log2 fold change") + ylab("-log10 p-value")
+ggplotly(p)
+```
+
+```{r}
+
+pd <- pData(gse_GSE138043)[[1]]
+p = identical(rownames(pd),colnames(exp));p
+if(!p) exp <- exp[,match(rownames(pd),colnames(exp))]
+
+gpl <- gse_GSE138043@annotation
+group_list <- ifelse(grepl("non-AR",gse_GSE138043$characteristics_ch1), "Stable", "Rejection")
+table(group_list)
+group_list = factor(group_list,
+                    levels = c("Rejection","Stable"))
+```
+```{r}
+install.packages("FactoMineR")
+install.packages("factoextra")
+```
+
+```{r}
+
+dat=as.data.frame(t(eMat)) 
+library(FactoMineR)
+library(factoextra) 
+# pca
+dat.pca <- PCA(dat, graph = FALSE)
+pca_plot <- fviz_pca_ind(dat.pca,
+                         geom.ind = "point",
+                         col.ind = group_list, 
+
+                         addEllipses = TRUE, 
+                         legend.title = "Groups"
+)
+ggplotly(pca_plot)
+
+```
+
+```{r}
+ind = rownames(tT[1:100,])
+X = as.matrix(t(exprs(gse_GSE138043[ind,])))
+y = gse_GSE138043$Outcome
+n_sim = 25 ## number of repeats
+cvK = 5
+cv_50acc5_knn = cv_50acc5_svm = cv_50acc5_rf = c()
+cv_acc_knn = cv_acc_svm = cv_acc_rf = c()
+
+
+for (i in 1:n_sim) {
+
+  cvSets = cvTools::cvFolds(nrow(X), cvK)  # permute all the data, into 5 folds
+  cv_acc_knn = cv_acc_svm = cv_acc_rf = c()
+  for (j in 1:cvK) {
+    test_id = cvSets$subsets[cvSets$which == j]
+    X_test = X[test_id, ]
+    X_train = X[-test_id, ]
+    y_test = y[test_id]
+    y_train = y[-test_id]
+    
+    ## KNN
+    fit5 = class::knn(train = X_train, test = X_test, cl = y_train, k = 5)
+    cv_acc_knn[j] = mean(fit5 == y_test)
+    
+    ## SVM
+    svm_res <- e1071::svm(x = X_train, y = as.factor(y_train))
+    fit <- predict(svm_res, X_test)
+    cv_acc_svm[j] = mean(fit == y_test)
+
+    ## RandomForest
+    rf_res <- randomForest::randomForest(x = X_train, y = as.factor(y_train))
+    fit <- predict(rf_res, X_test)
+    cv_acc_rf[j] = mean(fit == y_test)
+  }
+  cv_50acc5_knn <- append(cv_50acc5_knn, mean(cv_acc_knn))
+  cv_50acc5_svm <- append(cv_50acc5_svm, mean(cv_acc_svm))
+  cv_50acc5_rf <- append(cv_50acc5_rf, mean(cv_acc_rf))
+} ## end for
+```
+
+```{r}
+boxplot(list(KNN=cv_50acc5_knn,SVM=cv_50acc5_svm,RF=cv_50acc5_rf), ylab="CV Accuracy")
+```
+

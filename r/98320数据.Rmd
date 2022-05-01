@@ -1,0 +1,156 @@
+---
+title: "Untitled"
+output: html_document
+date: '2022-04-24'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+```{r}
+library(GEOquery)
+library(ggthemes)
+library(tidyverse)
+library(class)
+library(cvTools)
+library(ggplot2)
+library(e1071)
+library(glmnet)
+library(tidyverse)
+library(tuneR)
+library(ggplot2)
+```
+
+```{r}
+load("/Users/86188/Desktop/4.14quiz/QuizData/extra gse.RData")
+df_69677=pData(gse69677)
+df_76882=pData(gse76882)
+df_98320=pData(gse98320)
+View(df_69677)
+View(df_76882)
+View(df_98320)
+```
+
+```{r}
+gse_36059 <- getGEO("GSE36059")$'GSE36059_series_matrix.txt.gz'
+df_36059 = pData(gse_36059)
+df_36059
+```
+
+```{r}
+gse_131179 <- getGEO("GSE131179")$'GSE131179_series_matrix.txt.gz'
+df_131179 = pData(gse_131179)
+df_131179
+View(df_131179)
+dim(df_131179)
+```
+
+```{r}
+gse_69677 <- getGEO("GSE69677")$'GSE69677_series_matrix.txt.gz'
+df_69677 = pData(gse_69677)
+df_69677
+View(df_69677)
+```
+
+```{r}
+gse_76882 <- getGEO("GSE76882")$'GSE76882_series_matrix.txt.gz'
+df_76882 = pData(gse_76882)
+df_76882
+```
+
+```{r}
+gse_98320 <- getGEO("GSE98320")$'GSE98320_series_matrix.txt.gz'
+df_98320 = pData(gse_98320)
+df_98320
+```
+
+```{r}
+gse_120495 <- getGEO("GSE120495")$'GSE120495_series_matrix.txt.gz'
+df_120495 = pData(gse_120495)
+df_120495
+View(df_120495)
+dim(df_120495)
+```
+
+```{r}
+gse_120649 <- getGEO("GSE120649")$'GSE120649_series_matrix.txt.gz'
+df_120649 = pData(gse_120649)
+df_120649
+View(df_120649)
+dim(df_120649)
+```
+
+```{r}
+set.seed(3888)
+
+cvK = 5    # Number of CV folds
+n_sim = 50 # Number of repeats
+
+# Random forest CV for gse1 (biopsy model)
+
+cv_accuracy_gse1 = numeric(n_sim) # Vector to store averaged CV accuracies
+
+for (i in 1:n_sim) {
+  
+  cvSets = cvFolds(nrow(X_gse1), cvK) # Folds object for cross-validation
+  cv_accuracy_folds = numeric(cvK) # Vector to store accuracy for each fold
+  
+  for (j in 1:cvK) {
+    
+    test_id = cvSets$subsets[cvSets$which == j]
+    X_train = X_gse1[-test_id,]
+    X_test = X_gse1[test_id,]
+    y_train = y_gse1[-test_id]
+    y_test = y_gse1[test_id]
+    
+    current_rf_fit = randomForest(x = X_train, y = as.factor(y_train))
+    predictions = predict(current_rf_fit, X_test)
+    cv_accuracy_folds[j] = accuracy(y_test, predictions)
+    
+  }
+  
+  cv_accuracy_gse1[i] = mean(cv_accuracy_folds)
+  
+}
+
+# Random forest CV for gse4 (blood model)
+
+cv_accuracy_gse4 = numeric(n_sim)
+
+for (i in 1:n_sim) {
+  
+  cvSets = cvFolds(nrow(X_gse4), cvK)
+  cv_accuracy_folds = numeric(cvK)
+  
+  for (j in 1:cvK) {
+    
+    test_id = cvSets$subsets[cvSets$which == j]
+    X_train = X_gse4[-test_id,]
+    X_test = X_gse4[test_id,]
+    y_train = y_gse4[-test_id]
+    y_test = y_gse4[test_id]
+    
+    current_rf_fit = randomForest(x = X_train, y = as.factor(y_train))
+    predictions = predict(current_rf_fit, X_test)
+    cv_accuracy_folds[j] = accuracy(y_test, predictions)
+    
+  }
+  
+  cv_accuracy_gse4[i] = mean(cv_accuracy_folds)
+  
+}
+```
+
