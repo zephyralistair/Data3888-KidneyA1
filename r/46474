@@ -1,0 +1,188 @@
+#load library
+library(GEOquery)
+library(Biobase)
+library(limma)
+library(randomForest)
+library(e1071)
+library(R.utils)
+library(reshape2)
+library(tidyverse)
+
+
+#function to find differential expressed genes
+top_gene<-function(data,label,num){
+  design <- model.matrix(~ factor(label))
+  fit <- lmFit(data, design)
+  fit2 <- eBayes(fit)
+  tT <- topTable(fit2, coef=2, number = num, sort.by ="t")
+  retain_protein <- rownames(tT)
+  return(retain_protein)
+}
+
+# GSE46474 ----------------------------------------------------------------
+load("GSE46474.RData")
+gse_GSE46474<-gse
+rm(gse)
+
+head(exprs(gse_GSE46474))[,1:10]
+head(pData(gse_GSE46474)[,1:10])
+head(fData(gse_GSE46474)[,1:10])
+
+#store different data into different dataframe
+edata2=exprs(gse_GSE46474)
+fdata2=fData(gse_GSE46474)
+cdata2=pData(gse_GSE46474)
+label2= ifelse(grepl("AR", gse_GSE46474$title), "Rejection", "Stable")
+label2<-as.factor(label2)
+
+#checking missing values
+table(is.na(edata2))
+
+#transform the expression data to log form and remove those rows that have >10% missing values 
+n=dim(edata2)[2]*0.1
+edata2_log = log2(edata2[rowSums(is.na(edata1)) < n,])
+dim(edata2_log)
+
+#normalize the expression data
+edata2_norm = normalizeBetweenArrays(edata2_log, method = "scale")
+
+#return the top 20 differentially expressed genes
+
+mv <- rowSums(is.na(edata2_norm)) == 0
+gene2<-top_gene(as.matrix(edata2_norm[mv, ]),label2,20)
+
+#prevalidation
+
+#function for prevalidation
+prevalid<-function(X,y,k,X_p){
+  cvSets <- cvTools::cvFolds(nrow(X), k)
+  predre<-c()
+  cv_acc_svm<-0
+  for (j in 1:k) {
+    test_id <- cvSets$subsets[cvSets$which == j]
+    X_train <- X[-test_id, ]
+    y_train <- y[-test_id]
+    X_train<-X_train[,X_p]
+    X_test <- X[test_id, ]
+    X_test<-X_test[,X_p]
+    y_test <- y[test_id]
+    
+    trained_svm <- svm(X_train, factor(y_train), type = "C")
+    predicted_svm <- predict(trained_svm, X_test)
+    predre[test_id]<-predicted_svm
+    cv_acc_svm[j] <- mean(predicted_svm == y_test) 
+    
+  }
+  result<-list(re=predre,accuracy=cv_acc_svm)
+  return(result)
+}
+
+X <- t(as.matrix(edata2_norm[mv, ]))
+y <- label2
+prevalidre<-prevalid(X,y,k=10,gene2)
+
+#train logistic model
+#logistic regression with cross validation
+logistic<-function(X,y,k){
+  cvSets <- cvTools::cvFolds(nrow(X), k)
+  cv_acc_logit<-0
+  cv_50acc_logit<-0
+  for (i in 1:50){
+    for (j in 1:k) {
+      predre<-c()
+      test_id <- cvSets$subsets[cvSets$which == j]
+      X_train <- X[-test_id, ]
+      y_train <- y[-test_id]
+      X_test <- X[test_id, ]
+      y_test <- y[test_id]
+      X_train<-as.data.frame(X_train,stringsAsFactors=FALSE)
+      train<-cbind(X_train,y_train)
+      X_test<-as.data.frame(X_test)
+      trained_logit <- glm(y_train~., family=binomial(link='logit'),data=train)
+      predicted_logit <- predict(trained_logit, newdata=X_test,type="response")
+      predre[predicted_logit<0.5]<-"Rejection"
+      predre[predicted_logit>=0.5]<-"Stable"
+      cv_acc_logit[j] <- mean(predre == y_test) 
+      
+    }
+    cv_50acc_logit <- append(cv_50acc_logit, mean(cv_acc_logit))
+  }
+  return(cv_50acc_logit)
+}
+
+
+#prepare the data for logistic regression logit_X
+logit_X<-cbind(logit_X,prevaid=prevalidre$re)
+
+table(is.na(logit_X))
+
+logit_X <- apply(logit_X, 2, as.numeric)
+logit_X<-logit_X[complete.cases(logit_X),]
+
+
+colnames(cdata2)
+clinicalvar2 <- c("age_tx:ch1", "race:ch1", "Sex:ch1")
+logit_X <-  cdata2[, clinicalvar2]
+logit_X<-cbind(logit_X,prevaid=prevalidre$re,outcome=y)
+logit_X$`age_tx:ch1`<-as.numeric(logit_X$`age_tx:ch1`)
+
+table(is.na(logit_X))
+
+#we can not use cross validation as there are category variables in the dataset
+logisticre<-glm(outcome~., family=binomial(link='logit'),data=logit_X)
+
+summary(logisticre)
+
+predicted_logit <- predict(logisticre, newdata=logit_X,type="response")
+predrelogit<-c()
+predrelogit[predicted_logit<0.5]<-"Rejection"
+predrelogit[predicted_logit>=0.5]<-"Stable"
+
+
+
+
+
+
+#test data set
+
+cdata1<-read_table("clinical_info.txt")
+edata1<-read_table("gene_data.txt")
+
+
+# GSE57387 ----------------------------------------------------------------
+gse_GSE57387 <- getGEO("GSE57387")
+gse_GSE57387 <- gse_GSE57387$GSE57387_series_matrix.txt.gz
+
+head(exprs(gse_GSE57387))
+head(pData(gse_GSE57387)[,1:10])
+head(fData(gse_GSE57387)[,1:10])
+
+
+
+#store different data into different dataframe
+edata1=exprs(gse_GSE57387)
+fdata1=fData(gse_GSE57387)
+cdata1=pData(gse_GSE57387)
+rejection_status  <- gse_GSE57387$characteristics_ch1.1
+label1=unlist(lapply( strsplit(as.character(rejection_status), ": " ) , `[[` , 2)  )
+label1= ifelse(grepl("AR", gse_GSE57387$title), "Rejection", "Stable")
+label1<-as.factor(label1)
+
+
+#checking missing values
+table(is.na(edata1))
+
+#transform the expression data to log form and remove those rows that have >10% missing values 
+n=dim(edata1)[2]*0.1
+edata1_log = log2(edata1[rowSums(is.na(edata1)) < n,])
+dim(edata1_log)
+
+#normalize the expression data
+edata1_norm = normalizeBetweenArrays(edata1_log, method = "scale")
+
+#return the top 50 differential expressed genes
+
+mv <- rowSums(is.na(edata1_norm)) == 0
+
+
+
