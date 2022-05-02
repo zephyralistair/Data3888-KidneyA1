@@ -530,6 +530,7 @@ combined_df = cbind(clinical_df, t(emat2[top_genes, ])) %&gt;%
   mutate(outcome = as.factor(outcome2)) %&gt;% 
   drop_na() %&gt;% 
   mutate(sex = as.factor(sex))
+combined_df[,3] = combined_df[,3] %&gt;% scale()
 
 lr_fit = glm(outcome ~ . , data = combined_df,
              family = binomial(link = &quot;logit&quot;))</code></pre>
@@ -546,10 +547,10 @@ lr_fit = glm(outcome ~ . , data = combined_df,
 ## 
 ## Coefficients:
 ##             Estimate Std. Error z value Pr(&gt;|z|)  
-## (Intercept) -29.6757    21.6807  -1.369   0.1711  
+## (Intercept) -59.4424    36.7300  -1.618   0.1056  
 ## age           0.9400     0.5685   1.653   0.0982 .
 ## sexMale      -7.2750     4.1951  -1.734   0.0829 .
-## NM_014654   -38.6368    23.8790  -1.618   0.1057  
+## NM_014654    -4.9979     3.0889  -1.618   0.1057  
 ## NM_012474    32.5802    18.7965   1.733   0.0830 .
 ## NM_005526    55.6129    37.9632   1.465   0.1429  
 ## NM_006634    -6.6431     6.5727  -1.011   0.3122  
@@ -563,7 +564,24 @@ lr_fit = glm(outcome ~ . , data = combined_df,
 ## AIC: 25.411
 ## 
 ## Number of Fisher Scoring iterations: 11</code></pre>
-<pre class="r"><code>rf_fit = randomForest(x = combined_df %&gt;% select(-outcome), y = combined_df$outcome)</code></pre>
+<pre class="r"><code>rf_fit = randomForest(x = combined_df %&gt;% select(-outcome), y = combined_df$outcome)
+rf_fit</code></pre>
+<pre><code>## 
+## Call:
+##  randomForest(x = combined_df %&gt;% select(-outcome), y = combined_df$outcome) 
+##                Type of random forest: classification
+##                      Number of trees: 500
+## No. of variables tried at each split: 2
+## 
+##         OOB estimate of  error rate: 19.61%
+## Confusion matrix:
+##           Rejection Stable class.error
+## Rejection         5      8  0.61538462
+## Stable            2     36  0.05263158</code></pre>
+<pre class="r"><code>svm_fit = svm(combined_df %&gt;% select(-outcome) %&gt;% select(-sex), combined_df$outcome, kernel =&quot;radial&quot;)</code></pre>
+<pre class="r"><code># step.back.aic = step(lr_fit, direction = &quot;backward&quot;, trace = FALSE)
+# lr_fit_0 = glm(outcome ~ 1, data = combined_df, family = binomial(link = &quot;logit&quot;))
+# step.fwd.aic = step(lr_fit_0, scope = list(lower = lr_fit_0, upper = lr_fit), direction = &quot;forward&quot;, trace = FALSE)</code></pre>
 <pre class="r"><code>set.seed(3888)
 
 accuracy &lt;- function(true, predicted) {
@@ -635,7 +653,7 @@ cv_accuracy_overall %&gt;%
          &quot;sex&quot; = &quot;gender:ch1&quot;) %&gt;% 
   mutate(age = as.numeric(age),
          sex = as.factor(sex))
-X_test1 = cbind(X_test1, t(emat1[top_genes, ]))
+X_test1 = cbind(X_test1, t(emat1[top_genes, ]) %&gt;% scale())
 y_test1 = as.factor(outcome1)
 
 X_test3 = pdata3 %&gt;% 
@@ -644,30 +662,23 @@ X_test3 = pdata3 %&gt;%
          &quot;sex&quot; = &quot;Sex:ch1&quot;) %&gt;% 
   mutate(age = as.numeric(age),
          sex = as.factor(ifelse(sex == &quot;F&quot;, &quot;Female&quot;, &quot;Male&quot;)))
-X_test3 = cbind(X_test3, t(emat3[top_genes, ]))
+X_test3 = cbind(X_test3, t(emat3[top_genes, ]) %&gt;% scale())
 y_test3 = as.factor(outcome3)
 
 
-predicted_probs1 = predict(lr_fit, X_test1, type = &quot;response&quot;)
-predictions1 = ifelse(round(predicted_probs1) == 1, &quot;Stable&quot;, &quot;Rejection&quot;)
-table(predictions1, y_test1)</code></pre>
-<pre><code>##             y_test1
-## predictions1 Rejection Stable
-##    Rejection         6      0
-##    Stable            3      9</code></pre>
-<pre class="r"><code>predicted_probs2 = predict(lr_fit, combined_df %&gt;% select(-outcome), type = &quot;response&quot;)
-predictions2 = ifelse(round(predicted_probs2) == 1, &quot;Stable&quot;, &quot;Rejection&quot;)
-table(predictions2, combined_df$outcome)</code></pre>
-<pre><code>##             
-## predictions2 Rejection Stable
-##    Rejection        11      3
-##    Stable            2     35</code></pre>
-<pre class="r"><code>predicted_probs3 = predict(lr_fit, X_test3, type = &quot;response&quot;)
-predictions3 = ifelse(round(predicted_probs3) == 1, &quot;Stable&quot;, &quot;Rejection&quot;)
-table(predictions3, y_test3)</code></pre>
-<pre><code>##             y_test3
-## predictions3 Rejection Stable
-##       Stable        20     20</code></pre>
+# predicted_probs1 = predict(lr_fit, X_test1, type = &quot;response&quot;)
+# predictions1 = ifelse(round(predicted_probs1) == 1, &quot;Stable&quot;, &quot;Rejection&quot;)
+# table(predictions1, y_test1)
+# 
+# predicted_probs2 = predict(lr_fit, combined_df %&gt;% select(-outcome), type = &quot;response&quot;)
+# predictions2 = ifelse(round(predicted_probs2) == 1, &quot;Stable&quot;, &quot;Rejection&quot;)
+# table(predictions2, combined_df$outcome)
+# 
+# predicted_probs3 = predict(lr_fit, X_test3, type = &quot;response&quot;)
+# predictions3 = ifelse(round(predicted_probs3) == 1, &quot;Stable&quot;, &quot;Rejection&quot;)
+# table(predictions3, y_test3)
+print(&quot;random forest&quot;)</code></pre>
+<pre><code>## [1] &quot;random forest&quot;</code></pre>
 <pre class="r"><code>predictions1 = predict(rf_fit, X_test1)
 table(predictions1, y_test1)</code></pre>
 <pre><code>##             y_test1
@@ -684,8 +695,48 @@ table(predictions2, combined_df$outcome)</code></pre>
 table(predictions3, y_test3)</code></pre>
 <pre><code>##             y_test3
 ## predictions3 Rejection Stable
-##    Rejection         1      0
-##    Stable           19     20</code></pre>
+##    Rejection         3      4
+##    Stable           17     16</code></pre>
+<pre class="r"><code>print(&quot;svm&quot;)</code></pre>
+<pre><code>## [1] &quot;svm&quot;</code></pre>
+<pre class="r"><code>predictions1 = predict(svm_fit, X_test1 %&gt;% select(-sex))
+table(predictions1, y_test1)</code></pre>
+<pre><code>##             y_test1
+## predictions1 Rejection Stable
+##    Rejection         0      0
+##    Stable            9      9</code></pre>
+<pre class="r"><code>predictions2 = predict(svm_fit, combined_df %&gt;% select(-outcome) %&gt;% select(-sex))
+table(predictions2, combined_df$outcome)</code></pre>
+<pre><code>##             
+## predictions2 Rejection Stable
+##    Rejection        10      1
+##    Stable            3     37</code></pre>
+<pre class="r"><code>predictions3 = predict(svm_fit, X_test3 %&gt;% select(-sex))
+table(predictions3, y_test3)</code></pre>
+<pre><code>##             y_test3
+## predictions3 Rejection Stable
+##    Rejection         1      1
+##    Stable           19     19</code></pre>
+<pre class="r"><code>print(&quot;knn&quot;)</code></pre>
+<pre><code>## [1] &quot;knn&quot;</code></pre>
+<pre class="r"><code>predictions1 = knn(combined_df %&gt;% select(-outcome) %&gt;% select(-sex), test = X_test1 %&gt;% select(-sex), cl = combined_df$outcome)
+table(predictions1, y_test1)</code></pre>
+<pre><code>##             y_test1
+## predictions1 Rejection Stable
+##    Rejection         3      0
+##    Stable            6      9</code></pre>
+<pre class="r"><code>predictions2 = knn(combined_df %&gt;% select(-outcome) %&gt;% select(-sex), test = combined_df %&gt;% select(-outcome) %&gt;% select(-sex), cl = combined_df$outcome)
+table(predictions2, combined_df$outcome)</code></pre>
+<pre><code>##             
+## predictions2 Rejection Stable
+##    Rejection        13      0
+##    Stable            0     38</code></pre>
+<pre class="r"><code>predictions3 = knn(combined_df %&gt;% select(-outcome) %&gt;% select(-sex), test = X_test3 %&gt;% select(-sex), cl = combined_df$outcome)
+table(predictions3, y_test3)</code></pre>
+<pre><code>##             y_test3
+## predictions3 Rejection Stable
+##    Rejection         3      0
+##    Stable           17     20</code></pre>
 <pre class="r"><code># lr_fit = glm(outcome ~ ., data = X_test3 %&gt;% mutate(outcome = as.factor(y_test3)),
 #              family = binomial(link = &quot;logit&quot;))
 # summary(lr_fit)
@@ -714,28 +765,28 @@ table(predictions1, y_test1)</code></pre>
 table(predictions2, combined_df$outcome)</code></pre>
 <pre><code>##             
 ## predictions2 Rejection Stable
-##    Rejection        10     13
-##    Stable            3     25</code></pre>
+##    Rejection        12     21
+##    Stable            1     17</code></pre>
 <pre class="r"><code>predictions3 = predict(rf_fit, X_test3)
 table(predictions3, y_test3)</code></pre>
 <pre><code>##             y_test3
 ## predictions3 Rejection Stable
-##    Rejection         0      0
-##    Stable           20     20</code></pre>
+##    Rejection         7     12
+##    Stable           13      8</code></pre>
 <pre class="r"><code>rf_fit = randomForest(X_test3, y_test3)
 
 predictions1 = predict(rf_fit, X_test1)
 table(predictions1, y_test1)</code></pre>
 <pre><code>##             y_test1
 ## predictions1 Rejection Stable
-##    Rejection         0      1
-##    Stable            9      8</code></pre>
+##    Rejection         2      7
+##    Stable            7      2</code></pre>
 <pre class="r"><code>predictions2 = predict(rf_fit, combined_df %&gt;% select(-outcome))
 table(predictions2, combined_df$outcome)</code></pre>
 <pre><code>##             
 ## predictions2 Rejection Stable
-##    Rejection         6     26
-##    Stable            7     12</code></pre>
+##    Rejection        13     31
+##    Stable            0      7</code></pre>
 <pre class="r"><code>predictions3 = predict(rf_fit, X_test3)
 table(predictions3, y_test3)</code></pre>
 <pre><code>##             y_test3

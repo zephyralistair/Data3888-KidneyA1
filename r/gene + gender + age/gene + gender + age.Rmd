@@ -299,12 +299,23 @@ combined_df = cbind(clinical_df, t(emat2[top_genes, ])) %>%
   mutate(outcome = as.factor(outcome2)) %>% 
   drop_na() %>% 
   mutate(sex = as.factor(sex))
+combined_df[,3] = combined_df[,3] %>% scale()
 
 lr_fit = glm(outcome ~ . , data = combined_df,
              family = binomial(link = "logit"))
 summary(lr_fit)
 
 rf_fit = randomForest(x = combined_df %>% select(-outcome), y = combined_df$outcome)
+rf_fit
+
+svm_fit = svm(combined_df %>% select(-outcome) %>% select(-sex), combined_df$outcome, kernel ="radial")
+```
+
+```{r}
+# step.back.aic = step(lr_fit, direction = "backward", trace = FALSE)
+# lr_fit_0 = glm(outcome ~ 1, data = combined_df, family = binomial(link = "logit"))
+# step.fwd.aic = step(lr_fit_0, scope = list(lower = lr_fit_0, upper = lr_fit), direction = "forward", trace = FALSE)
+
 ```
 
 ```{r, warning = F}
@@ -381,7 +392,7 @@ X_test1 = pdata1 %>%
          "sex" = "gender:ch1") %>% 
   mutate(age = as.numeric(age),
          sex = as.factor(sex))
-X_test1 = cbind(X_test1, t(emat1[top_genes, ]))
+X_test1 = cbind(X_test1, t(emat1[top_genes, ]) %>% scale())
 y_test1 = as.factor(outcome1)
 
 X_test3 = pdata3 %>% 
@@ -390,22 +401,22 @@ X_test3 = pdata3 %>%
          "sex" = "Sex:ch1") %>% 
   mutate(age = as.numeric(age),
          sex = as.factor(ifelse(sex == "F", "Female", "Male")))
-X_test3 = cbind(X_test3, t(emat3[top_genes, ]))
+X_test3 = cbind(X_test3, t(emat3[top_genes, ]) %>% scale())
 y_test3 = as.factor(outcome3)
 
 
-predicted_probs1 = predict(lr_fit, X_test1, type = "response")
-predictions1 = ifelse(round(predicted_probs1) == 1, "Stable", "Rejection")
-table(predictions1, y_test1)
-
-predicted_probs2 = predict(lr_fit, combined_df %>% select(-outcome), type = "response")
-predictions2 = ifelse(round(predicted_probs2) == 1, "Stable", "Rejection")
-table(predictions2, combined_df$outcome)
-
-predicted_probs3 = predict(lr_fit, X_test3, type = "response")
-predictions3 = ifelse(round(predicted_probs3) == 1, "Stable", "Rejection")
-table(predictions3, y_test3)
-
+# predicted_probs1 = predict(lr_fit, X_test1, type = "response")
+# predictions1 = ifelse(round(predicted_probs1) == 1, "Stable", "Rejection")
+# table(predictions1, y_test1)
+# 
+# predicted_probs2 = predict(lr_fit, combined_df %>% select(-outcome), type = "response")
+# predictions2 = ifelse(round(predicted_probs2) == 1, "Stable", "Rejection")
+# table(predictions2, combined_df$outcome)
+# 
+# predicted_probs3 = predict(lr_fit, X_test3, type = "response")
+# predictions3 = ifelse(round(predicted_probs3) == 1, "Stable", "Rejection")
+# table(predictions3, y_test3)
+print("random forest")
 
 predictions1 = predict(rf_fit, X_test1)
 table(predictions1, y_test1)
@@ -414,6 +425,28 @@ predictions2 = predict(rf_fit, combined_df %>% select(-outcome))
 table(predictions2, combined_df$outcome)
 
 predictions3 = predict(rf_fit, X_test3)
+table(predictions3, y_test3)
+
+print("svm")
+
+predictions1 = predict(svm_fit, X_test1 %>% select(-sex))
+table(predictions1, y_test1)
+
+predictions2 = predict(svm_fit, combined_df %>% select(-outcome) %>% select(-sex))
+table(predictions2, combined_df$outcome)
+
+predictions3 = predict(svm_fit, X_test3 %>% select(-sex))
+table(predictions3, y_test3)
+
+print("knn")
+
+predictions1 = knn(combined_df %>% select(-outcome) %>% select(-sex), test = X_test1 %>% select(-sex), cl = combined_df$outcome)
+table(predictions1, y_test1)
+
+predictions2 = knn(combined_df %>% select(-outcome) %>% select(-sex), test = combined_df %>% select(-outcome) %>% select(-sex), cl = combined_df$outcome)
+table(predictions2, combined_df$outcome)
+
+predictions3 = knn(combined_df %>% select(-outcome) %>% select(-sex), test = X_test3 %>% select(-sex), cl = combined_df$outcome)
 table(predictions3, y_test3)
 ```
 
