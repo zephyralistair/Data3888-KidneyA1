@@ -42,3 +42,4 @@ vignettes/*.pdf
 .Renviron
 r/Alistair-s-temp-work.RData
 r/extra gse.RData
+*.log
