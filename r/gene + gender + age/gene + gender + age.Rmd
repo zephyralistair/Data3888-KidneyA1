@@ -27,6 +27,8 @@ load("gene + gender + age.rdata")
 # 
 # gse3 <- getGEO("GSE46474")
 # gse3 <- gse3$GSE46474_series_matrix.txt.gz
+
+seed = 3888
 ```
 
 ```{r, message = F}
@@ -145,7 +147,7 @@ extract_eq(lr_fit2, use_coefs = TRUE)
 ```
 
 ```{r}
-set.seed(3888)
+set.seed(seed)
 
 accuracy <- function(true, predicted) {
   # Calculates accuracy based on a vector of true labels and a vector of predictions
@@ -292,14 +294,14 @@ clinical_df = pdata2 %>%
   select(c("description.1", "description.2")) %>% 
   rename("age" = "description.1",
          "sex" = "description.2") %>% 
-  mutate(age = as.numeric(age_cleaned),
+  mutate(age = as.numeric(age_cleaned) %>% scale(),
          sex = sex_cleaned)
 
 combined_df = cbind(clinical_df, t(emat2[top_genes, ])) %>% 
   mutate(outcome = as.factor(outcome2)) %>% 
   drop_na() %>% 
   mutate(sex = as.factor(sex))
-combined_df[,3] = combined_df[,3] %>% scale()
+combined_df[, 3: (length(combined_df) - 1)] = combined_df[, 3: (length(combined_df) - 1)] %>% scale()
 
 lr_fit = glm(outcome ~ . , data = combined_df,
              family = binomial(link = "logit"))
@@ -390,7 +392,7 @@ X_test1 = pdata1 %>%
   select(c("age:ch1", "gender:ch1")) %>% 
   rename("age" = "age:ch1",
          "sex" = "gender:ch1") %>% 
-  mutate(age = as.numeric(age),
+  mutate(age = as.numeric(age) %>% scale(),
          sex = as.factor(sex))
 X_test1 = cbind(X_test1, t(emat1[top_genes, ]) %>% scale())
 y_test1 = as.factor(outcome1)
@@ -399,7 +401,7 @@ X_test3 = pdata3 %>%
   select(c("age_tx:ch1", "Sex:ch1")) %>% 
   rename("age" = "age_tx:ch1",
          "sex" = "Sex:ch1") %>% 
-  mutate(age = as.numeric(age),
+  mutate(age = as.numeric(age) %>% scale(),
          sex = as.factor(ifelse(sex == "F", "Female", "Male")))
 X_test3 = cbind(X_test3, t(emat3[top_genes, ]) %>% scale())
 y_test3 = as.factor(outcome3)
@@ -488,4 +490,102 @@ table(predictions2, combined_df$outcome)
 
 predictions3 = predict(rf_fit, X_test3)
 table(predictions3, y_test3)
+```
+```{r, message = F}
+set.seed(seed)
+
+accuracy <- function(true, predicted) {
+  # Calculates accuracy based on a vector of true labels and a vector of predictions
+  return(sum(true == predicted)/length(true))
+}
+
+cvK = 5    # Number of CV folds
+n_sim = 50 # Number of repeats
+cv_accuracy_overall = numeric(n_sim) # Vector to store averaged CV accuracies
+n_list = c()
+
+for (i in 1:n_sim) {
+  
+  cvSets = cvFolds(nrow(combined_df), cvK) # Folds object for cross-validation
+  cv_accuracy_folds = numeric(cvK) # Vector to store accuracy for each fold
+  
+  for (j in 1:cvK) {
+    
+    test_id = cvSets$subsets[cvSets$which == j]
+    
+    n = 0
+    acc = 0
+    
+    for (top_n in seq(2, 20, 2)) {
+      
+      genes = rownames(topTable(fit2, number = top_n))
+      combined_df = cbind(clinical_df, t(emat2[top_genes, ])) %>% 
+        mutate(outcome = as.factor(outcome2)) %>% 
+        drop_na() %>% 
+        mutate(sex = as.factor(sex))
+      combined_df[, 3: (length(combined_df) - 1)] = combined_df[, 3: (length(combined_df) - 1)] %>% scale()
+      
+      X_combined = combined_df %>% select(-outcome)
+      y_combined = combined_df %>% pull(outcome)
+      
+      train = combined_df[-test_id,]
+      X_test = X_combined[test_id,]
+      y_test = y_combined[test_id]
+      
+      current_rf_fit = randomForest(x = train %>% select(-outcome), y = train$outcome)
+      predictions = predict(current_rf_fit, X_test) # Predicting probability of stable
+      cv_accuracy_folds[j] = accuracy(y_test, predictions)
+      current_accuracy = accuracy(y_test, predictions)
+      
+      if (current_accuracy > acc) {
+        
+        acc = current_accuracy
+        n = top_n
+        
+      }
+      
+    }
+    
+    n_list = append(n_list, n)
+    
+    genes = rownames(topTable(fit2, number = n))
+    combined_df = cbind(clinical_df, t(emat2[top_genes, ])) %>% 
+      mutate(outcome = as.factor(outcome2)) %>% 
+      drop_na() %>% 
+      mutate(sex = as.factor(sex))
+    combined_df[, 3: (length(combined_df) - 1)] = combined_df[, 3: (length(combined_df) - 1)] %>% scale()
+    
+    X_combined = combined_df %>% select(-outcome)
+    y_combined = combined_df %>% pull(outcome)
+    
+    train = combined_df[-test_id,] # Don't split training set to match glm syntax
+    X_test = X_combined[test_id,]
+    y_test = y_combined[test_id]
+    
+    current_rf_fit = randomForest(x = train %>% select(-outcome), y = train$outcome)
+    predictions = predict(current_rf_fit, X_test) # Predicting probability of stable
+    cv_accuracy_folds[j] = accuracy(y_test, predictions)
+    
+  }
+  
+  cv_accuracy_overall[i] = mean(cv_accuracy_folds)
+  
+}
+
+cv_accuracy_overall %>% 
+  data.frame(accuracy = .) %>% 
+  ggplot(mapping = aes(x = "", y = accuracy)) +
+  geom_boxplot() +
+  geom_jitter(size = 1) +
+  coord_flip() +
+  labs(title = "Distribution of mean 5-fold CV accuracies across 50 repeats",
+       x = "", y = "Mean 5-fold CV accuracy") +
+  theme(plot.title = element_text(hjust = 0.5, size = 12),
+        panel.border = element_rect(colour = "black", fill = NA, size = 1))
+```
+
+```{r}
+summary(n_list)
+boxplot(n_list)
+table(n_list)
 ```
