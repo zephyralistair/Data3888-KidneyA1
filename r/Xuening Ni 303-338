@@ -1,0 +1,526 @@
+---
+title: "gene + gender + age"
+author: '500331091'
+date: "2022/4/30"
+output: html_document
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+Sys.setlocale(locale = "C")
+library(GEOquery)
+library(tidyverse)
+library(limma)
+library(VennDiagram)
+library(cvTools)
+library(e1071)
+library(equatiomatic)
+library(randomForest)
+library(class)
+load("gene + gender + age.rdata")
+
+# gse1 <- getGEO("GSE51675")
+# gse1 <- gse1$GSE51675_series_matrix.txt.gz
+# 
+# gse2 <- getGEO("GSE1563")
+# gse2 <- gse2$GSE1563_series_matrix.txt.gz
+# 
+# gse3 <- getGEO("GSE46474")
+# gse3 <- gse3$GSE46474_series_matrix.txt.gz
+```
+
+```{r, message = F}
+top_n = 20
+p_threshold = 0.05
+logfc_threshold = 0.5
+
+pdata1 <- pData(gse1)
+emat1 <- exprs(gse1) %>% scale()
+outcome1 <- ifelse(grepl("rejection", pdata1$source_name_ch1), "Rejection", "Stable")
+design1 <- model.matrix(~outcome1)
+fit1 <- lmFit(emat1, design1)
+fit1 <- eBayes(fit1)
+df1 <- topTable(fit1, number = nrow(fit1), genelist = fData(gse1)$GENE_SYMBOL)
+ggplot(df1, aes(logFC, -log10(P.Value))) + 
+    geom_point(aes(colour = -log10(P.Value)), alpha = 1 / 3, size = 1) + 
+    scale_colour_gradient(low = "blue", high = "red") + 
+    xlab("log2 fold change") + ylab("-log10 p-value")# + 
+    # geom_hline(yintercept = -log10(p_threshold), linetype = "dashed") + 
+    # geom_vline(xintercept = logfc_threshold, linetype = "dashed")
+genes1 = topTable(fit1, number = top_n, genelist = fData(gse1)$GENE_SYMBOL)$ID
+genes1 = genes1[genes1 != ""]
+
+pdata2 <- pData(gse2)
+emat2 <- exprs(gse2) %>% log2() %>% scale()
+outcome2 <- ifelse(grepl("acute rejection", pdata2$description), "Rejection", "Stable")
+design2 <- model.matrix(~outcome2)
+fit2 <- lmFit(emat2, design2)
+fit2 <- eBayes(fit2)
+df2 <- topTable(fit2, number = nrow(fit2), genelist = fData(gse2)$`Gene Symbol`)
+ggplot(df2, aes(logFC, -log10(P.Value))) + 
+    geom_point(aes(colour = -log10(P.Value)), alpha = 1 / 3, size = 1) + 
+    scale_colour_gradient(low = "blue", high = "red") + 
+    xlab("log2 fold change") + ylab("-log10 p-value")# + 
+    # geom_hline(yintercept = -log10(p_threshold), linetype = "dashed") + 
+    # geom_vline(xintercept = logfc_threshold, linetype = "dashed")
+genes2 = topTable(fit2, number = top_n, genelist = fData(gse2)$`Gene Symbol`)$ID
+genes2 = genes2[genes2 != ""]
+
+pdata3 <- pData(gse3)
+emat3 <- exprs(gse3) %>% scale()
+outcome3 <- ifelse(grepl("AR", pdata3$title), "Rejection", "Stable")
+design3 <- model.matrix(~outcome3)
+fit3 <- lmFit(emat3, design3)
+fit3 <- eBayes(fit3)
+df3 <- topTable(fit3, number = nrow(fit3), genelist = fData(gse3)$`Gene Symbol`)
+ggplot(df3, aes(logFC, -log10(P.Value))) + 
+    geom_point(aes(colour = -log10(P.Value)), alpha = 1 / 3, size = 1) + 
+    scale_colour_gradient(low = "blue", high = "red") + 
+    xlab("log2 fold change") + ylab("-log10 p-value")# + 
+    # geom_hline(yintercept = -log10(p_threshold), linetype = "dashed") + 
+    # geom_vline(xintercept = logfc_threshold, linetype = "dashed")
+genes3 = topTable(fit3, number = top_n, genelist = fData(gse3)$`Gene Symbol`)$ID
+genes3 = genes3[genes3 != ""]
+
+venn_df = list()
+venn_df$GSE51675 = genes1
+venn_df$GSE1563 = genes2
+venn_df$GSE46474 = genes3
+color_list = c("#fb0007", "#139177", "#ed9e08", "#f56f08", "#4caecc")
+fill_colors = color_list[1:length(venn_df)]
+venn.diagram(venn_df, filename = "VennDiagram.tif", col = "white", fill = fill_colors, lwd = .5, cex = .5, cat.cex = .5, width = 1200, height = 1200)
+venn_df
+knitr::include_graphics("VennDiagram.tif")
+```
+
+```{r, message = F}
+set.seed(3888)
+preval_k = 5
+
+X = t(emat2)
+y = outcome2
+cvSets = cvFolds(nrow(X), preval_k)
+apv = numeric(nrow(X))
+
+for (i in 1:preval_k) {
+  
+  test_id = cvSets$subsets[cvSets$which == i]
+  X_test = X[test_id,]
+  X_train = X[-test_id,]
+  y_test = y[test_id]
+  y_train = y[-test_id]
+  
+  design = model.matrix(~y_train)
+  fit = eBayes(lmFit(t(X_train), design))
+  top_genes = rownames(topTable(fit, n = top_n))
+  X_test_mod = X_test[, top_genes]
+  X_train_mod = X_train[, top_genes]
+  
+  svm_res = svm(x = X_train_mod, y = as.factor(y_train))
+  apv[test_id] = as.character(predict(svm_res, X_test_mod))
+  
+}
+table(apv, y)
+
+age_cleaned = matrix(unlist(sapply(pdata2$description.1, strsplit, ":")), nrow=2)[2,]
+sex_cleaned = matrix(unlist(sapply(pdata2$description.2, strsplit, ":")), nrow=2)[2,]
+clinical_df = pdata2 %>% 
+  select(c("description.1", "description.2")) %>% 
+  rename("age" = "description.1",
+         "sex" = "description.2") %>% 
+  mutate(age = as.numeric(age_cleaned),
+         sex = as.factor(sex_cleaned))
+
+combined_df = clinical_df %>% 
+  mutate(apv = as.factor(apv),
+         outcome = as.factor(y)) %>% 
+  drop_na()
+
+lr_fit = glm(outcome ~ age + sex + apv, data = combined_df,
+             family = binomial(link = "logit"))
+summary(lr_fit)
+lr_fit2 = update(lr_fit, . ~ . - sex)
+summary(lr_fit2)
+extract_eq(lr_fit2, use_coefs = TRUE)
+```
+
+```{r}
+set.seed(3888)
+
+accuracy <- function(true, predicted) {
+  # Calculates accuracy based on a vector of true labels and a vector of predictions
+  return(sum(true == predicted)/length(true))
+}
+
+X_combined = combined_df %>% select(-outcome) %>% select(-sex)
+y_combined = combined_df %>% pull(outcome)
+cvK = 5    # Number of CV folds
+n_sim = 50 # Number of repeats
+cv_accuracy_overall = numeric(n_sim) # Vector to store averaged CV accuracies
+
+for (i in 1:n_sim) {
+  
+  cvSets = cvFolds(nrow(combined_df), cvK) # Folds object for cross-validation
+  cv_accuracy_folds = numeric(cvK) # Vector to store accuracy for each fold
+  
+  for (j in 1:cvK) {
+    
+    test_id = cvSets$subsets[cvSets$which == j]
+    train = combined_df[-test_id,] # Don't split training set to match glm syntax
+    X_test = X_combined[test_id,]
+    y_test = y_combined[test_id]
+    
+    current_lr_fit = glm(outcome ~ age + apv, data = train,
+                         family = binomial(link = "logit"))
+    predicted_probs = predict(current_lr_fit, X_test, 
+                              type = "response") # Predicting probability of stable
+    predictions = ifelse(round(predicted_probs) == 1, 
+                         "Stable", "Rejection") # Converting probabilities into categories
+    cv_accuracy_folds[j] = accuracy(y_test, predictions)
+    
+  }
+  
+  cv_accuracy_overall[i] = mean(cv_accuracy_folds)
+  
+}
+
+cv_accuracy_overall %>% 
+  data.frame(accuracy = .) %>% 
+  ggplot(mapping = aes(x = "", y = accuracy)) +
+  geom_boxplot() +
+  geom_jitter(size = 1) +
+  coord_flip() +
+  labs(title = "Distribution of mean 5-fold CV accuracies across 50 repeats",
+       x = "", y = "Mean 5-fold CV accuracy") +
+  theme(plot.title = element_text(hjust = 0.5, size = 12),
+        panel.border = element_rect(colour = "black", fill = NA, size = 1))
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+gse1_have_ID = gse1[-which(fData(gse1)$REFSEQ == ""),]
+gse1_true_ID = sapply(strsplit(fData(gse1_have_ID)$REFSEQ, split = " /// "), "[[", 1)
+gse1_cleaned = gse1_have_ID[!duplicated(gse1_true_ID),]
+rownames(gse1_cleaned) = gse1_true_ID[!duplicated(gse1_true_ID)]
+
+gse2_have_ID = gse2[-which(fData(gse2)$`RefSeq Transcript ID` == ""),]
+gse2_true_ID = sapply(strsplit(fData(gse2_have_ID)$`RefSeq Transcript ID`, split = " /// "), "[[", 1)
+gse2_cleaned = gse2_have_ID[!duplicated(gse2_true_ID),]
+rownames(gse2_cleaned) = gse2_true_ID[!duplicated(gse2_true_ID)]
+
+gse3_have_ID = gse3[-which(fData(gse3)$`RefSeq Transcript ID` == ""),]
+gse3_true_ID = sapply(strsplit(fData(gse3_have_ID)$`RefSeq Transcript ID`, split = " /// "), "[[", 1)
+gse3_cleaned = gse3_have_ID[!duplicated(gse3_true_ID),]
+rownames(gse3_cleaned) = gse3_true_ID[!duplicated(gse3_true_ID)]
+```
+
+```{r}
+top_n = 1500
+p_threshold = 0.05
+logfc_threshold = 0.5
+
+pdata1 <- pData(gse1_cleaned)
+emat1 <- exprs(gse1_cleaned) %>% scale()
+outcome1 <- ifelse(grepl("rejection", pdata1$source_name_ch1), "Rejection", "Stable")
+design1 <- model.matrix(~outcome1)
+fit1 <- lmFit(emat1, design1)
+fit1 <- eBayes(fit1)
+df1 <- topTable(fit1, number = nrow(fit1), genelist = fData(gse1_cleaned)$GENE_SYMBOL)
+ggplot(df1, aes(logFC, -log10(P.Value))) + 
+    geom_point(aes(colour = -log10(P.Value)), alpha = 1 / 3, size = 1) + 
+    scale_colour_gradient(low = "blue", high = "red") + 
+    xlab("log2 fold change") + ylab("-log10 p-value")# + 
+    # geom_hline(yintercept = -log10(p_threshold), linetype = "dashed") + 
+    # geom_vline(xintercept = logfc_threshold, linetype = "dashed")
+genes1 = rownames(topTable(fit1, number = top_n))
+
+pdata2 <- pData(gse2_cleaned)
+emat2 <- exprs(gse2_cleaned) %>% log2() %>% scale()
+outcome2 <- ifelse(grepl("acute rejection", pdata2$description), "Rejection", "Stable")
+design2 <- model.matrix(~outcome2)
+fit2 <- lmFit(emat2, design2)
+fit2 <- eBayes(fit2)
+df2 <- topTable(fit2, number = nrow(fit2), genelist = fData(gse2_cleaned)$`Gene Symbol`)
+ggplot(df2, aes(logFC, -log10(P.Value))) + 
+    geom_point(aes(colour = -log10(P.Value)), alpha = 1 / 3, size = 1) + 
+    scale_colour_gradient(low = "blue", high = "red") + 
+    xlab("log2 fold change") + ylab("-log10 p-value")# + 
+    # geom_hline(yintercept = -log10(p_threshold), linetype = "dashed") + 
+    # geom_vline(xintercept = logfc_threshold, linetype = "dashed")
+genes2 = rownames(topTable(fit2, number = top_n))
+
+pdata3 <- pData(gse3_cleaned)
+emat3 <- exprs(gse3_cleaned) %>% scale()
+outcome3 <- ifelse(grepl("AR", pdata3$title), "Rejection", "Stable")
+design3 <- model.matrix(~outcome3)
+fit3 <- lmFit(emat3, design3)
+fit3 <- eBayes(fit3)
+df3 <- topTable(fit3, number = nrow(fit3), genelist = fData(gse3_cleaned)$`Gene Symbol`)
+ggplot(df3, aes(logFC, -log10(P.Value))) + 
+    geom_point(aes(colour = -log10(P.Value)), alpha = 1 / 3, size = 1) + 
+    scale_colour_gradient(low = "blue", high = "red") + 
+    xlab("log2 fold change") + ylab("-log10 p-value")# + 
+    # geom_hline(yintercept = -log10(p_threshold), linetype = "dashed") + 
+    # geom_vline(xintercept = logfc_threshold, linetype = "dashed")
+genes3 = rownames(topTable(fit3, number = top_n))
+
+venn_df = list()
+venn_df$GSE51675 = genes1
+venn_df$GSE1563 = genes2
+venn_df$GSE46474 = genes3
+color_list = c("#fb0007", "#139177", "#ed9e08", "#f56f08", "#4caecc")
+fill_colors = color_list[1:length(venn_df)]
+venn.diagram(venn_df, filename = "test_VennDiagram.tif", col = "white", fill = fill_colors, lwd = .5, cex = .5, cat.cex = .5, width = 1200, height = 1200)
+
+top_genes = intersect(genes1, genes2)
+top_genes = intersect(top_genes, genes3)
+```
+
+```{r, message = F}
+age_cleaned = matrix(unlist(sapply(pdata2$description.1, strsplit, ": ")), nrow=2)[2,]
+age_cleaned = ifelse(age_cleaned == "unknown", NA, age_cleaned)
+sex_cleaned = matrix(unlist(sapply(pdata2$description.2, strsplit, ": ")), nrow=2)[2,]
+clinical_df = pdata2 %>% 
+  select(c("description.1", "description.2")) %>% 
+  rename("age" = "description.1",
+         "sex" = "description.2") %>% 
+  mutate(age = as.numeric(age_cleaned),
+         sex = sex_cleaned)
+
+combined_df = cbind(clinical_df, t(emat2[top_genes, ])) %>% 
+  mutate(outcome = as.factor(outcome2)) %>% 
+  drop_na() %>% 
+  mutate(sex = as.factor(sex))
+
+combined_df[,3:6] = combined_df[,3:6] %>% scale()
+
+#deal with variable selection issue when fitting logistic regression
+#0 first give 0.24 weight to each of the four gene in the combined_df
+
+combined_df[,3] = combined_df[,3]*0.25
+combined_df[,4] = combined_df[,4]*0.25
+combined_df[,5] = combined_df[,5]*0.25
+combined_df[,6] = combined_df[,6]*0.25
+
+#1. fit logistic regression model from null
+
+lr_fit0 = glm(outcome ~ 1 , data = combined_df, family = binomial(link = "logit"))
+summary(lr_fit0)
+
+#2 fit logistic regression full model
+
+lr_fitall = glm(outcome ~ . , data = combined_df,
+                family = binomial(link = "logit"))
+summary(lr_fit)
+
+#3. using forward selection to do variable selection
+step.fwd.aic = step(lr_fit0,
+                    scope = list(lower = lr_fit0, upper = lr_fitall),
+                    direction = "forward")
+
+step.fwd.aic
+
+
+#4. The opitmal logisitic regression model using AIC
+
+lr_fit = glm(
+  outcome ~ outcome ~ NM_005526 + age + NM_012474 + NM_014654 + sex ,
+  data = combined_df,
+  family = binomial(link = "logit")
+)
+
+
+
+
+rf_fit = randomForest(x = combined_df %>% select(-outcome), y = combined_df$outcome)
+rf_fit
+
+svm_fit = svm(combined_df %>% select(-outcome) %>% select(-sex), combined_df$outcome, kernel ="radial")
+```
+
+```{r}
+# step.back.aic = step(lr_fit, direction = "backward", trace = FALSE)
+# lr_fit_0 = glm(outcome ~ 1, data = combined_df, family = binomial(link = "logit"))
+# step.fwd.aic = step(lr_fit_0, scope = list(lower = lr_fit_0, upper = lr_fit), direction = "forward", trace = FALSE)
+
+```
+
+```{r, warning = F}
+set.seed(3888)
+
+accuracy <- function(true, predicted) {
+  # Calculates accuracy based on a vector of true labels and a vector of predictions
+  return(sum(true == predicted)/length(true))
+}
+
+X_combined = combined_df %>% select(-outcome)
+y_combined = combined_df %>% pull(outcome)
+cvK = 5    # Number of CV folds
+n_sim = 50 # Number of repeats
+cv_accuracy_overall = numeric(n_sim) # Vector to store averaged CV accuracies
+cv_accuracy_overall2 = numeric(n_sim)
+
+for (i in 1:n_sim) {
+  
+  cvSets = cvFolds(nrow(combined_df), cvK) # Folds object for cross-validation
+  cv_accuracy_folds = numeric(cvK) # Vector to store accuracy for each fold
+  cv_accuracy_folds2 = numeric(cvK)
+  
+  for (j in 1:cvK) {
+    
+    test_id = cvSets$subsets[cvSets$which == j]
+    train = combined_df[-test_id,] # Don't split training set to match glm syntax
+    X_test = X_combined[test_id,]
+    y_test = y_combined[test_id]
+    
+    current_rf_fit = randomForest(x = train %>% select(-outcome), y = train$outcome)
+    current_lr_fit = glm(outcome ~ . , data = train, family = binomial(link = "logit"))
+    predictions = predict(current_rf_fit, X_test) # Predicting probability of stable
+    cv_accuracy_folds[j] = accuracy(y_test, predictions)
+    predicted_probs = predict(current_lr_fit, X_test, type = "response")
+    predictions = ifelse(round(predicted_probs) == 1, 
+                         "Stable", "Rejection")
+    cv_accuracy_folds2[j] = accuracy(y_test, predictions)
+    
+  }
+  
+  cv_accuracy_overall[i] = mean(cv_accuracy_folds)
+  cv_accuracy_overall2[i] = mean(cv_accuracy_folds2)
+  
+}
+
+cv_accuracy_overall %>% 
+  data.frame(accuracy = .) %>% 
+  ggplot(mapping = aes(x = "", y = accuracy)) +
+  geom_boxplot() +
+  geom_jitter(size = 1) +
+  coord_flip() +
+  labs(title = "RF Distribution of mean 5-fold CV accuracies across 50 repeats",
+       x = "", y = "Mean 5-fold CV accuracy") +
+  theme(plot.title = element_text(hjust = 0.5, size = 12),
+        panel.border = element_rect(colour = "black", fill = NA, size = 1))
+
+cv_accuracy_overall2 %>% 
+  data.frame(accuracy = .) %>% 
+  ggplot(mapping = aes(x = "", y = accuracy)) +
+  geom_boxplot() +
+  geom_jitter(size = 1) +
+  coord_flip() +
+  labs(title = "GLM Distribution of mean 5-fold CV accuracies across 50 repeats",
+       x = "", y = "Mean 5-fold CV accuracy") +
+  theme(plot.title = element_text(hjust = 0.5, size = 12),
+        panel.border = element_rect(colour = "black", fill = NA, size = 1))
+```
+
+```{r}
+X_test1 = pdata1 %>% 
+  select(c("age:ch1", "gender:ch1")) %>% 
+  rename("age" = "age:ch1",
+         "sex" = "gender:ch1") %>% 
+  mutate(age = as.numeric(age),
+         sex = as.factor(sex))
+X_test1 = cbind(X_test1, t(emat1[top_genes, ]) %>% scale())
+y_test1 = as.factor(outcome1)
+
+X_test3 = pdata3 %>% 
+  select(c("age_tx:ch1", "Sex:ch1")) %>% 
+  rename("age" = "age_tx:ch1",
+         "sex" = "Sex:ch1") %>% 
+  mutate(age = as.numeric(age),
+         sex = as.factor(ifelse(sex == "F", "Female", "Male")))
+X_test3 = cbind(X_test3, t(emat3[top_genes, ]) %>% scale())
+y_test3 = as.factor(outcome3)
+
+
+# predicted_probs1 = predict(lr_fit, X_test1, type = "response")
+# predictions1 = ifelse(round(predicted_probs1) == 1, "Stable", "Rejection")
+# table(predictions1, y_test1)
+# 
+# predicted_probs2 = predict(lr_fit, combined_df %>% select(-outcome), type = "response")
+# predictions2 = ifelse(round(predicted_probs2) == 1, "Stable", "Rejection")
+# table(predictions2, combined_df$outcome)
+# 
+# predicted_probs3 = predict(lr_fit, X_test3, type = "response")
+# predictions3 = ifelse(round(predicted_probs3) == 1, "Stable", "Rejection")
+# table(predictions3, y_test3)
+print("random forest")
+
+predictions1 = predict(rf_fit, X_test1)
+table(predictions1, y_test1)
+
+predictions2 = predict(rf_fit, combined_df %>% select(-outcome))
+table(predictions2, combined_df$outcome)
+
+predictions3 = predict(rf_fit, X_test3)
+table(predictions3, y_test3)
+
+print("svm")
+
+predictions1 = predict(svm_fit, X_test1 %>% select(-sex))
+table(predictions1, y_test1)
+
+predictions2 = predict(svm_fit, combined_df %>% select(-outcome) %>% select(-sex))
+table(predictions2, combined_df$outcome)
+
+predictions3 = predict(svm_fit, X_test3 %>% select(-sex))
+table(predictions3, y_test3)
+
+print("knn")
+
+predictions1 = knn(combined_df %>% select(-outcome) %>% select(-sex), test = X_test1 %>% select(-sex), cl = combined_df$outcome)
+table(predictions1, y_test1)
+
+predictions2 = knn(combined_df %>% select(-outcome) %>% select(-sex), test = combined_df %>% select(-outcome) %>% select(-sex), cl = combined_df$outcome)
+table(predictions2, combined_df$outcome)
+
+predictions3 = knn(combined_df %>% select(-outcome) %>% select(-sex), test = X_test3 %>% select(-sex), cl = combined_df$outcome)
+table(predictions3, y_test3)
+```
+
+```{r}
+# lr_fit = glm(outcome ~ ., data = X_test3 %>% mutate(outcome = as.factor(y_test3)),
+#              family = binomial(link = "logit"))
+# summary(lr_fit)
+# 
+# predicted_probs1 = predict(lr_fit, X_test1, type = "response")
+# predictions1 = ifelse(round(predicted_probs1) == 1, "Stable", "Rejection")
+# table(predictions1, y_test1)
+# 
+# predicted_probs2 = predict(lr_fit, combined_df %>% select(-outcome), type = "response")
+# predictions2 = ifelse(round(predicted_probs2) == 1, "Stable", "Rejection")
+# table(predictions2, combined_df$outcome)
+# 
+# predicted_probs3 = predict(lr_fit, X_test3, type = "response")
+# predictions3 = ifelse(round(predicted_probs3) == 1, "Stable", "Rejection")
+# table(predictions3, y_test3)
+
+rf_fit = randomForest(X_test1, y_test1)
+
+predictions1 = predict(rf_fit, X_test1)
+table(predictions1, y_test1)
+
+predictions2 = predict(rf_fit, combined_df %>% select(-outcome))
+table(predictions2, combined_df$outcome)
+
+predictions3 = predict(rf_fit, X_test3)
+table(predictions3, y_test3)
+
+rf_fit = randomForest(X_test3, y_test3)
+
+predictions1 = predict(rf_fit, X_test1)
+table(predictions1, y_test1)
+
+predictions2 = predict(rf_fit, combined_df %>% select(-outcome))
+table(predictions2, combined_df$outcome)
+
+predictions3 = predict(rf_fit, X_test3)
+table(predictions3, y_test3)
+```
