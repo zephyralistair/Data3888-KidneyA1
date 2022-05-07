@@ -5,6 +5,7 @@ date: "2022/4/30"
 output: html_document
 ---
 
+
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 Sys.setlocale(locale = "C")
@@ -36,6 +37,8 @@ top_n = 20
 p_threshold = 0.05
 logfc_threshold = 0.5
 
+
+
 pdata1 <- pData(gse1)
 emat1 <- exprs(gse1) %>% scale()
 outcome1 <- ifelse(grepl("rejection", pdata1$source_name_ch1), "Rejection", "Stable")
@@ -43,12 +46,18 @@ design1 <- model.matrix(~outcome1)
 fit1 <- lmFit(emat1, design1)
 fit1 <- eBayes(fit1)
 df1 <- topTable(fit1, number = nrow(fit1), genelist = fData(gse1)$GENE_SYMBOL)
-ggplot(df1, aes(logFC, -log10(P.Value))) + 
-    geom_point(aes(colour = -log10(P.Value)), alpha = 1 / 3, size = 1) + 
-    scale_colour_gradient(low = "blue", high = "red") + 
-    xlab("log2 fold change") + ylab("-log10 p-value")# + 
-    # geom_hline(yintercept = -log10(p_threshold), linetype = "dashed") + 
-    # geom_vline(xintercept = logfc_threshold, linetype = "dashed")
+
+df1$significant = "stable"
+df1$significant[df1$logFC > 0.5 & df1$P.Value < 0.05] = "up"
+df1$significant[df1$logFC < -0.5 & df1$P.Value < 0.05] = "down"
+
+ggplot(df1, aes(df1$logFC, -log10(df1$P.Value))) + 
+    geom_point(aes(colour = significant),alpha = 0.4, size = 0.8) + xlim(-3,3) +
+    scale_colour_manual(values = c("Blue", "Grey", "Red"))  + theme_classic() +
+    geom_hline(yintercept = -log10(0.05), linetype = 2, alpha = 0.5, size = 0.6) +
+    geom_vline(xintercept = c(-0.5,0.5), linetype = 2, alpha = 0.5, size = 0.6) +
+    xlab("log2 fold change") + ylab("-log10 p-value") 
+
 genes1 = topTable(fit1, number = top_n, genelist = fData(gse1)$GENE_SYMBOL)$ID
 genes1 = genes1[genes1 != ""]
 
@@ -59,12 +68,18 @@ design2 <- model.matrix(~outcome2)
 fit2 <- lmFit(emat2, design2)
 fit2 <- eBayes(fit2)
 df2 <- topTable(fit2, number = nrow(fit2), genelist = fData(gse2)$`Gene Symbol`)
-ggplot(df2, aes(logFC, -log10(P.Value))) + 
-    geom_point(aes(colour = -log10(P.Value)), alpha = 1 / 3, size = 1) + 
-    scale_colour_gradient(low = "blue", high = "red") + 
-    xlab("log2 fold change") + ylab("-log10 p-value")# + 
-    # geom_hline(yintercept = -log10(p_threshold), linetype = "dashed") + 
-    # geom_vline(xintercept = logfc_threshold, linetype = "dashed")
+
+df2$significant = "stable"
+df2$significant[df2$logFC > 0.5 & df2$P.Value < 0.05] = "up"
+df2$significant[df2$logFC < -0.5 & df2$P.Value < 0.05] = "down"
+
+ggplot(df2, aes(df2$logFC, -log10(df2$P.Value))) + 
+    geom_point(aes(colour = significant),alpha = 0.4, size = 0.8) + 
+    scale_colour_manual(values = c("Blue", "Grey", "Red"))  + theme_classic() +
+    geom_hline(yintercept = -log10(0.05), linetype = 2, alpha = 0.5, size = 0.6) +
+    geom_vline(xintercept = c(-0.5,0.5), linetype = 2, alpha = 0.5, size = 0.6) +
+    xlab("log2 fold change") + ylab("-log10 p-value")
+
 genes2 = topTable(fit2, number = top_n, genelist = fData(gse2)$`Gene Symbol`)$ID
 genes2 = genes2[genes2 != ""]
 
@@ -75,12 +90,18 @@ design3 <- model.matrix(~outcome3)
 fit3 <- lmFit(emat3, design3)
 fit3 <- eBayes(fit3)
 df3 <- topTable(fit3, number = nrow(fit3), genelist = fData(gse3)$`Gene Symbol`)
-ggplot(df3, aes(logFC, -log10(P.Value))) + 
-    geom_point(aes(colour = -log10(P.Value)), alpha = 1 / 3, size = 1) + 
-    scale_colour_gradient(low = "blue", high = "red") + 
-    xlab("log2 fold change") + ylab("-log10 p-value")# + 
-    # geom_hline(yintercept = -log10(p_threshold), linetype = "dashed") + 
-    # geom_vline(xintercept = logfc_threshold, linetype = "dashed")
+
+df3$significant = "stable"
+df3$significant[df3$logFC > 0.5 & df3$P.Value < 0.05] = "up"
+df3$significant[df3$logFC < -0.5 & df3$P.Value < 0.05] = "down"
+
+ggplot(df3, aes(df3$logFC, -log10(df3$P.Value))) + 
+    geom_point(aes(colour = significant),alpha = 0.4, size = 0.8) + 
+    scale_colour_manual(values = c("Blue", "Grey", "Red"))  + theme_classic() +
+    geom_hline(yintercept = -log10(0.05), linetype = 2, alpha = 0.5, size = 0.6) +
+    geom_vline(xintercept = c(-0.5,0.5), linetype = 2, alpha = 0.5, size = 0.6) +
+    xlab("log2 fold change") + ylab("-log10 p-value")
+
 genes3 = topTable(fit3, number = top_n, genelist = fData(gse3)$`Gene Symbol`)$ID
 genes3 = genes3[genes3 != ""]
 
@@ -236,12 +257,18 @@ design1 <- model.matrix(~outcome1)
 fit1 <- lmFit(emat1, design1)
 fit1 <- eBayes(fit1)
 df1 <- topTable(fit1, number = nrow(fit1), genelist = fData(gse1_cleaned)$GENE_SYMBOL)
-ggplot(df1, aes(logFC, -log10(P.Value))) + 
-    geom_point(aes(colour = -log10(P.Value)), alpha = 1 / 3, size = 1) + 
-    scale_colour_gradient(low = "blue", high = "red") + 
-    xlab("log2 fold change") + ylab("-log10 p-value")# + 
-    # geom_hline(yintercept = -log10(p_threshold), linetype = "dashed") + 
-    # geom_vline(xintercept = logfc_threshold, linetype = "dashed")
+
+df1$significant = "stable"
+df1$significant[df1$logFC > 0.5 & df1$P.Value < 0.05] = "up"
+df1$significant[df1$logFC < -0.5 & df1$P.Value < 0.05] = "down"
+
+ggplot(df1, aes(df1$logFC, -log10(df1$P.Value))) + 
+    geom_point(aes(colour = significant),alpha = 0.4, size = 0.8) + xlim(-3,3) +
+    scale_colour_manual(values = c("Blue", "Grey", "Red"))  + theme_classic() +
+    geom_hline(yintercept = -log10(0.05), linetype = 2, alpha = 0.5, size = 0.6) +
+    geom_vline(xintercept = c(-0.5,0.5), linetype = 2, alpha = 0.5, size = 0.6) +
+    xlab("log2 fold change") + ylab("-log10 p-value")
+
 genes1 = rownames(topTable(fit1, number = top_n))
 
 pdata2 <- pData(gse2_cleaned)
@@ -251,12 +278,18 @@ design2 <- model.matrix(~outcome2)
 fit2 <- lmFit(emat2, design2)
 fit2 <- eBayes(fit2)
 df2 <- topTable(fit2, number = nrow(fit2), genelist = fData(gse2_cleaned)$`Gene Symbol`)
-ggplot(df2, aes(logFC, -log10(P.Value))) + 
-    geom_point(aes(colour = -log10(P.Value)), alpha = 1 / 3, size = 1) + 
-    scale_colour_gradient(low = "blue", high = "red") + 
-    xlab("log2 fold change") + ylab("-log10 p-value")# + 
-    # geom_hline(yintercept = -log10(p_threshold), linetype = "dashed") + 
-    # geom_vline(xintercept = logfc_threshold, linetype = "dashed")
+
+df2$significant = "stable"
+df2$significant[df2$logFC > 0.5 & df2$P.Value < 0.05] = "up"
+df2$significant[df2$logFC < -0.5 & df2$P.Value < 0.05] = "down"
+
+ggplot(df2, aes(df2$logFC, -log10(df2$P.Value))) + 
+    geom_point(aes(colour = significant),alpha = 0.4, size = 0.8) + 
+    scale_colour_manual(values = c("Blue", "Grey", "Red"))  + theme_classic() +
+    geom_hline(yintercept = -log10(0.05), linetype = 2, alpha = 0.5, size = 0.6) +
+    geom_vline(xintercept = c(-0.5,0.5), linetype = 2, alpha = 0.5, size = 0.6) +
+    xlab("log2 fold change") + ylab("-log10 p-value")
+
 genes2 = rownames(topTable(fit2, number = top_n))
 
 pdata3 <- pData(gse3_cleaned)
@@ -266,12 +299,18 @@ design3 <- model.matrix(~outcome3)
 fit3 <- lmFit(emat3, design3)
 fit3 <- eBayes(fit3)
 df3 <- topTable(fit3, number = nrow(fit3), genelist = fData(gse3_cleaned)$`Gene Symbol`)
-ggplot(df3, aes(logFC, -log10(P.Value))) + 
-    geom_point(aes(colour = -log10(P.Value)), alpha = 1 / 3, size = 1) + 
-    scale_colour_gradient(low = "blue", high = "red") + 
-    xlab("log2 fold change") + ylab("-log10 p-value")# + 
-    # geom_hline(yintercept = -log10(p_threshold), linetype = "dashed") + 
-    # geom_vline(xintercept = logfc_threshold, linetype = "dashed")
+
+df3$significant = "stable"
+df3$significant[df3$logFC > 0.5 & df3$P.Value < 0.05] = "up"
+df3$significant[df3$logFC < -0.5 & df3$P.Value < 0.05] = "down"
+
+ggplot(df3, aes(df3$logFC, -log10(df3$P.Value))) + 
+    geom_point(aes(colour = significant),alpha = 0.4, size = 0.8) + 
+    scale_colour_manual(values = c("Blue", "Grey", "Red"))  + theme_classic() +
+    geom_hline(yintercept = -log10(0.05), linetype = 2, alpha = 0.5, size = 0.6) +
+    geom_vline(xintercept = c(-0.5,0.5), linetype = 2, alpha = 0.5, size = 0.6) +
+    xlab("log2 fold change") + ylab("-log10 p-value")
+
 genes3 = rownames(topTable(fit3, number = top_n))
 
 venn_df = list()
