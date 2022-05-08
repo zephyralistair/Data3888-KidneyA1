@@ -374,7 +374,7 @@ step.fwd.aic
 #4. The opitmal logisitic regression model using AIC
 
 lr_fit = glm(
-  outcome ~ outcome ~ NM_005526 + age + NM_012474 + NM_014654 + sex ,
+  outcome ~ NM_005526 + age + NM_012474 + NM_014654 + sex ,
   data = combined_df,
   family = binomial(link = "logit")
 )
@@ -574,7 +574,7 @@ accuracy <- function(true, predicted) {
 }
 
 cvK = 5    # Number of CV folds
-n_sim = 50 # Number of repeats
+n_sim = 1 # Number of repeats
 cv_accuracy_overall = numeric(n_sim) # Vector to store averaged CV accuracies
 n_list = c()
 
@@ -590,7 +590,7 @@ for (i in 1:n_sim) {
     n = 0
     acc = 0
     
-    for (top_n in seq(2, 20, 2)) {
+    for (top_n in seq(1, 50, 1)) {
       
       genes = rownames(topTable(fit2, number = top_n))
       combined_df = cbind(clinical_df, t(emat2[top_genes, ])) %>% 
