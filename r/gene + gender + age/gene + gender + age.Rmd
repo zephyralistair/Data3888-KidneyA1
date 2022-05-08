@@ -342,7 +342,7 @@ combined_df = cbind(clinical_df, t(emat2[top_genes, ])) %>%
   mutate(sex = as.factor(sex))
 
 
-combined_df[,3:6] = combined_df[,3:6] %>% scale()
+combined_df[, 3: (length(combined_df) - 1)] = combined_df[, 3: (length(combined_df) - 1)] %>% scale()
 
 #deal with variable selection issue when fitting logistic regression
 #0 first give 0.24 weight to each of the four gene in the combined_df
