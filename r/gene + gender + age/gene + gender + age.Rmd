@@ -340,11 +340,46 @@ combined_df = cbind(clinical_df, t(emat2[top_genes, ])) %>%
   mutate(outcome = as.factor(outcome2)) %>% 
   drop_na() %>% 
   mutate(sex = as.factor(sex))
-combined_df[, 3: (length(combined_df) - 1)] = combined_df[, 3: (length(combined_df) - 1)] %>% scale()
 
-lr_fit = glm(outcome ~ . , data = combined_df,
-             family = binomial(link = "logit"))
+
+combined_df[,3:6] = combined_df[,3:6] %>% scale()
+
+#deal with variable selection issue when fitting logistic regression
+#0 first give 0.24 weight to each of the four gene in the combined_df
+
+combined_df[,3] = combined_df[,3]*0.25
+combined_df[,4] = combined_df[,4]*0.25
+combined_df[,5] = combined_df[,5]*0.25
+combined_df[,6] = combined_df[,6]*0.25
+
+#1. fit logistic regression model from null
+
+lr_fit0 = glm(outcome ~ 1 , data = combined_df, family = binomial(link = "logit"))
+summary(lr_fit0)
+
+#2 fit logistic regression full model
+
+lr_fitall = glm(outcome ~ . , data = combined_df,
+                family = binomial(link = "logit"))
 summary(lr_fit)
+
+#3. using forward selection to do variable selection
+step.fwd.aic = step(lr_fit0,
+                    scope = list(lower = lr_fit0, upper = lr_fitall),
+                    direction = "forward")
+
+step.fwd.aic
+
+
+#4. The opitmal logisitic regression model using AIC
+
+lr_fit = glm(
+  outcome ~ outcome ~ NM_005526 + age + NM_012474 + NM_014654 + sex ,
+  data = combined_df,
+  family = binomial(link = "logit")
+)
+
+
 
 rf_fit = randomForest(x = combined_df %>% select(-outcome), y = combined_df$outcome)
 rf_fit
