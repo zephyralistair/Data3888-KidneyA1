@@ -28,7 +28,7 @@ library(equatiomatic)
 library(randomForest)
 library(class)
 
-load("gene + gender + age.rdata")
+load("datasets.rdata")
 
 # gse1 <- getGEO("GSE51675")
 # gse1 <- gse1$GSE51675_series_matrix.txt.gz

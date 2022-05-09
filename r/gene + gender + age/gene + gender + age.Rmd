@@ -468,7 +468,7 @@ X_test1 = pdata1 %>%
          "sex" = "gender:ch1") %>% 
   mutate(age = as.numeric(age) %>% scale(),
          sex = as.factor(sex))
-X_test1 = cbind(X_test1, t(emat1[top_genes, ]) %>% scale())
+X_test1 = cbind(X_test1, t(emat1[top_genes, ]))
 y_test1 = as.factor(outcome1)
 
 X_test3 = pdata3 %>% 
@@ -477,7 +477,7 @@ X_test3 = pdata3 %>%
          "sex" = "Sex:ch1") %>% 
   mutate(age = as.numeric(age) %>% scale(),
          sex = as.factor(ifelse(sex == "F", "Female", "Male")))
-X_test3 = cbind(X_test3, t(emat3[top_genes, ]) %>% scale())
+X_test3 = cbind(X_test3, t(emat3[top_genes, ]))
 y_test3 = as.factor(outcome3)
 
 
