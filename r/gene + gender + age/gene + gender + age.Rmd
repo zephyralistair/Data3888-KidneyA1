@@ -341,7 +341,6 @@ combined_df = cbind(clinical_df, t(emat2[top_genes, ])) %>%
   drop_na() %>% 
   mutate(sex = as.factor(sex))
 
-
 combined_df[, 3: (length(combined_df) - 1)] = combined_df[, 3: (length(combined_df) - 1)] %>% scale()
 
 #deal with variable selection issue when fitting logistic regression
@@ -577,6 +576,7 @@ cvK = 5    # Number of CV folds
 n_sim = 1 # Number of repeats
 cv_accuracy_overall = numeric(n_sim) # Vector to store averaged CV accuracies
 n_list = c()
+genes_list = c()
 
 for (i in 1:n_sim) {
   
@@ -593,7 +593,7 @@ for (i in 1:n_sim) {
     for (top_n in seq(1, 50, 1)) {
       
       genes = rownames(topTable(fit2, number = top_n))
-      combined_df = cbind(clinical_df, t(emat2[top_genes, ])) %>% 
+      combined_df = cbind(clinical_df, t(emat2[genes, ])) %>% 
         mutate(outcome = as.factor(outcome2)) %>% 
         drop_na() %>% 
         mutate(sex = as.factor(sex))
@@ -621,9 +621,10 @@ for (i in 1:n_sim) {
     }
     
     n_list = append(n_list, n)
+    genes_list = append(genes_list, genes)
     
     genes = rownames(topTable(fit2, number = n))
-    combined_df = cbind(clinical_df, t(emat2[top_genes, ])) %>% 
+    combined_df = cbind(clinical_df, t(emat2[genes, ])) %>% 
       mutate(outcome = as.factor(outcome2)) %>% 
       drop_na() %>% 
       mutate(sex = as.factor(sex))
