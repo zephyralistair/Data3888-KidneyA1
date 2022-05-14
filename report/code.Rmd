@@ -382,5 +382,21 @@ table(Predictions = predictions3, Class = y_test3)
 ```
 
 ```{r save}
-save(gse3_cleaned, combined_df, final_model, file = "shiny.RData")
+emat2_unscaled <- exprs(gse2_cleaned) %>% log2()
+
+clinical_df_unscaled = pdata2 %>% 
+  select(c("description.1", "description.2")) %>% 
+  rename("age" = "description.1",
+         "sex" = "description.2") %>% 
+  mutate(age = as.numeric(age_cleaned),
+         sex = sex_cleaned)
+
+combined_df_unscaled = cbind(clinical_df_unscaled, t(emat2_unscaled[top_genes, ])) %>% 
+  mutate(outcome = as.factor(outcome2)) %>% 
+  drop_na() %>% 
+  mutate(sex = as.factor(sex))
+
+combined_df_unscaled[, 3: (length(combined_df_unscaled) - 1)] = combined_df_unscaled[, 3: (length(combined_df_unscaled) - 1)] * (1 / length(top_genes))
+
+save(gse3_cleaned, combined_df, final_model, combined_df_unscaled, file = "shiny.RData")
 ```
