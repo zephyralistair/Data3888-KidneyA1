@@ -67,15 +67,15 @@ gse3_cleaned = gse3_have_ID[!duplicated(gse3_true_ID),]
 rownames(gse3_cleaned) = gse3_true_ID[!duplicated(gse3_true_ID)]
 
 pdata1 <- pData(gse1_cleaned)
-emat1 <- exprs(gse1_cleaned) %>% scale()
+emat1 <- exprs(gse1_cleaned)# %>% scale()
 outcome1 <- ifelse(grepl("rejection", pdata1$source_name_ch1), "Rejection", "Stable")
 
 pdata2 <- pData(gse2_cleaned)
-emat2 <- exprs(gse2_cleaned) %>% log2() %>% scale()
+emat2 <- exprs(gse2_cleaned) %>% log2()# %>% scale()
 outcome2 <- ifelse(grepl("acute rejection", pdata2$description), "Rejection", "Stable")
 
 pdata3 <- pData(gse3_cleaned)
-emat3 <- exprs(gse3_cleaned) %>% scale()
+emat3 <- exprs(gse3_cleaned)# %>% scale()
 outcome3 <- ifelse(grepl("AR", pdata3$title), "Rejection", "Stable")
 
 age_cleaned = matrix(unlist(sapply(pdata2$description.1, strsplit, ": ")), nrow=2)[2,]
@@ -168,7 +168,12 @@ for (j in 1:cvK) {
       mutate(outcome = as.factor(outcome2)) %>% 
       drop_na() %>% 
       mutate(sex = as.factor(sex))
-    combined_df[, 3: (length(combined_df) - 1)] = combined_df[, 3: (length(combined_df) - 1)] %>% scale()
+    for (i in 3: (length(combined_df) - 1)) {
+      combined_df[, i] = combined_df[, i] / length(genes)
+      mean = mean(combined_df[, i])
+      sd = sd(combined_df[, i])
+      combined_df[, i] = (combined_df[, i] - mean) / sd
+    }
     
     cvSets = cvFolds(nrow(combined_df), cvK) # Folds object for cross-validation
     test_id = cvSets$subsets[cvSets$which == j]
@@ -202,7 +207,12 @@ for (j in 1:cvK) {
     mutate(outcome = as.factor(outcome2)) %>%
     drop_na() %>%
     mutate(sex = as.factor(sex))
-  combined_df[, 3: (length(combined_df) - 1)] = combined_df[, 3: (length(combined_df) - 1)] %>% scale()
+  for (i in 3: (length(combined_df) - 1)) {
+    combined_df[, i] = combined_df[, i] / length(genes)
+    mean = mean(combined_df[, i])
+    sd = sd(combined_df[, i])
+    combined_df[, i] = (combined_df[, i] - mean) / sd
+  }
 
   cvSets = cvFolds(nrow(combined_df), cvK) # Folds object for cross-validation
   test_id = cvSets$subsets[cvSets$which == j]
@@ -228,7 +238,7 @@ table(n_list)
 ```
 
 ```{r intersection, message=F}
-top_n = 1388
+top_n = 1100
 
 genes1 = rownames(topTable(fit1, number = top_n))
 genes2 = rownames(topTable(fit2, number = top_n))
@@ -254,7 +264,12 @@ combined_df = cbind(clinical_df, t(emat2[top_genes, ])) %>%
   drop_na() %>% 
   mutate(sex = as.factor(sex))
 
-combined_df[, 3: (length(combined_df) - 1)] = combined_df[, 3: (length(combined_df) - 1)] * (1 / length(top_genes))
+for (i in 3: (length(combined_df) - 1)) {
+  combined_df[, i] = combined_df[, i] / length(top_genes)
+  mean = mean(combined_df[, i])
+  sd = sd(combined_df[, i])
+  combined_df[, i] = (combined_df[, i] - mean) / sd
+}
 ```
 
 ```{r repeated_cv, warning=F, message=F}
@@ -353,6 +368,12 @@ X_test1 = pdata1 %>%
   mutate(age = as.numeric(age) %>% scale(),
          sex = as.factor(sex))
 X_test1 = cbind(X_test1, t(emat1[top_genes, ]))
+for (i in 3: (length(X_test1))) {
+  X_test1[, i] = X_test1[, i] / length(top_genes)
+  mean = mean(X_test1[, i])
+  sd = sd(X_test1[, i])
+  X_test1[, i] = (X_test1[, i] - mean) / sd
+}
 y_test1 = as.factor(outcome1)
 
 X_test3 = pdata3 %>% 
@@ -362,6 +383,12 @@ X_test3 = pdata3 %>%
   mutate(age = as.numeric(age) %>% scale(),
          sex = as.factor(ifelse(sex == "F", "Female", "Male")))
 X_test3 = cbind(X_test3, t(emat3[top_genes, ]))
+for (i in 3: (length(X_test3))) {
+  X_test3[, i] = X_test3[, i] / length(top_genes)
+  mean = mean(X_test3[, i])
+  sd = sd(X_test3[, i])
+  X_test3[, i] = (X_test3[, i] - mean) / sd
+}
 y_test3 = as.factor(outcome3)
 
 predicted_probs1 = predict(final_model, X_test1, type = "response")
@@ -382,5 +409,21 @@ table(Predictions = predictions3, Class = y_test3)
 ```
 
 ```{r save}
-save(gse3_cleaned, combined_df, final_model, file = "shiny.RData")
+emat2_unscaled <- exprs(gse2_cleaned) %>% log2()
+
+clinical_df_unscaled = pdata2 %>% 
+  select(c("description.1", "description.2")) %>% 
+  rename("age" = "description.1",
+         "sex" = "description.2") %>% 
+  mutate(age = as.numeric(age_cleaned),
+         sex = sex_cleaned)
+
+combined_df_unscaled = cbind(clinical_df_unscaled, t(emat2_unscaled[top_genes, ])) %>% 
+  mutate(outcome = as.factor(outcome2)) %>% 
+  drop_na() %>% 
+  mutate(sex = as.factor(sex))
+
+combined_df_unscaled[, 3: (length(combined_df_unscaled) - 1)] = combined_df_unscaled[, 3: (length(combined_df_unscaled) - 1)] * (1 / length(top_genes))
+
+save(gse3_cleaned, combined_df, final_model, combined_df_unscaled, file = "shiny.RData")
 ```
