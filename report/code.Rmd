@@ -288,6 +288,7 @@ cv_accuracy_lr = numeric(n_sim) # Vector to store averaged CV accuracies
 cv_accuracy_rf = numeric(n_sim)
 cv_accuracy_svm = numeric(n_sim)
 cv_accuracy_nb = numeric(n_sim)
+cv_accuracy_knn = numeric(n_sim)
 # cv_accuracy_dt = numeric(n_sim)
 
 for (i in 1:n_sim) {
@@ -297,6 +298,7 @@ for (i in 1:n_sim) {
   cv_accuracy_folds_rf = numeric(cvK)
   cv_accuracy_folds_svm = numeric(cvK)
   cv_accuracy_folds_nb = numeric(cvK)
+  cv_accuracy_folds_knn = numeric(cvK)
   # cv_accuracy_folds_dt = numeric(cvK)
   
   for (j in 1:cvK) {
@@ -327,6 +329,9 @@ for (i in 1:n_sim) {
     predictions = predict(current_nb_fit, X_test)
     cv_accuracy_folds_nb[j] = accuracy(y_test, predictions)
     
+    predictions = knn(train %>% select(-outcome) %>% select(-sex), test = X_test %>% select(-sex), cl = train$outcome, k = 6)
+    cv_accuracy_folds_knn[j] = accuracy(y_test, predictions)
+    
     # predictions = predict(current_dt_fit, X_test)
     # cv_accuracy_folds_dt[j] = accuracy(y_test, predictions)
   }
@@ -335,6 +340,7 @@ for (i in 1:n_sim) {
   cv_accuracy_rf[i] = mean(cv_accuracy_folds_rf)
   cv_accuracy_svm[i] = mean(cv_accuracy_folds_svm)
   cv_accuracy_nb[i] = mean(cv_accuracy_folds_nb)
+  cv_accuracy_knn[i] = mean(cv_accuracy_folds_knn)
   # cv_accuracy_dt[i] = mean(cv_accuracy_folds_dt)
   
 }
@@ -343,9 +349,10 @@ df_lr = cbind(Accuracy = cv_accuracy_lr, Classifier = "Weighted Logistic")
 df_rf = cbind(Accuracy = cv_accuracy_rf, Classifier = "Random Forest")
 df_svm = cbind(Accuracy = cv_accuracy_svm, Classifier = "Support Vector Machine")
 df_nb = cbind(Accuracy = cv_accuracy_nb, Classifier = "Naive Bayes")
+df_knn = cbind(Accuracy = cv_accuracy_knn, Classifier = "6-Nearest Neighbor")
 # df_dt = cbind(Accuracy = cv_accuracy_dt, Classifier = "Decision Trees")
 
-df_classifier_cv = data.frame(rbind(df_lr, df_rf, df_svm, df_nb))
+df_classifier_cv = data.frame(rbind(df_lr, df_rf, df_svm, df_nb, df_knn))
 df_classifier_cv$Classifier = factor(df_classifier_cv$Classifier)
 df_classifier_cv$Accuracy = as.numeric(df_classifier_cv$Accuracy)
 
@@ -359,7 +366,7 @@ ggplot(df_classifier_cv, aes(x = Classifier, y = Accuracy)) +
 ```
 
 ```{r independent_datasets_performance, warning=F}
-final_model = glm(outcome ~ ., data = combined_df, family = binomial(link = "logit"), maxit = 10000)
+final_model = naive_bayes(outcome ~ ., train)
 
 X_test1 = pdata1 %>% 
   select(c("age:ch1", "gender:ch1")) %>% 
@@ -391,12 +398,10 @@ for (i in 3: (length(X_test3))) {
 }
 y_test3 = as.factor(outcome3)
 
-predicted_probs1 = predict(final_model, X_test1, type = "response")
-predictions1 = ifelse(round(predicted_probs1) == 1, "Stable", "Rejection")
+predictions1 = predict(final_model, X_test1)
 table(Predictions = predictions1, Class = y_test1)
 
-predicted_probs3 = predict(final_model, X_test3, type = "response")
-predictions3 = ifelse(round(predicted_probs3) == 1, "Stable", "Rejection")
+predictions3 = predict(final_model, X_test3)
 table(Predictions = predictions3, Class = y_test3)
 ```
 
