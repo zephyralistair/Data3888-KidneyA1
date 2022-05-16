@@ -9,3 +9,4 @@ Group Project
 * Meeting 4.25 - https://docs.google.com/document/d/1feTplmUu6kRjeOarErD37s0IhvoZAyev8veazZyC4l4/edit
 * Meeting 5.2 - https://docs.google.com/document/d/1Ucsp7GTEfumg6ykEKcQatS58g91LqxaLYSs6z17AgiA/edit
 * Meeting 5.8 - https://docs.google.com/document/d/1Sn9Y4TQ0fCsfftRZ_muPJYqAvimWWPIBqpxB4Q6tyFU/edit
+* Presentation Scaffold - https://docs.google.com/document/d/1_Ga5vY8bMl0UnjRpmRoNnIWwttQOQuv4xRDVnmDjtI8/edit
