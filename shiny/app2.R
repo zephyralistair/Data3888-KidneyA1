@@ -150,8 +150,8 @@ server <- function(input, output) {
     predicted_outcome <- predict(final_model, input_data)
 
     
-    HTML(sprintf(strong("The predicted kidney transplantation result for given inputs is <strong>%.2f%%</strong>.")
-    ))
+    HTML(sprintf("The predicted kidney transplantation result for given inputs is <strong>%s%</strong>.", 
+                 predicted_outcome))
   })
 }
 
