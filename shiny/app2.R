@@ -14,6 +14,8 @@ library(shinydashboard)
 library(shinyvalidate)
 library(dashboardthemes)
 library(naivebayes)
+library(DT)
+library(data.table)
 load("shiny.rdata")
 #final_model <- final_model
 
@@ -40,14 +42,25 @@ ui <- dashboardPage(
                     br(),
                     br(),
                     
-                    h2("Notes"),
+                    h3("Notes"),
                     h4("Age: "),
                     p("The age range is 18-68 years old, as the age range of our training set is only 18-68 years old, we will collect more data in the future to expand the age range so that we can get more accurate prediction results for people beyond this age range."),
                     h4("Sex: "),
                     p("The data in our training set is only binary gender, so unfortunately we are unable to provide a non-binary gender option here and will need to collect further data to expand our options."),
                     h4("Gene:"),
-                    p("The default value is the average value of the genes in the database.If the doctor does not know the patient's NM_000544 and NM_004803 gene data or is unable to fill in these two options, the average of these two genes in the database will be taken automatically instead."),
-           
+                    p("The default value is the average value of the genes in the database.If the doctor does not know the patient's TAP2 and SLC22A14 gene data or is unable to fill in these two options, the average of these two genes in the database will be taken automatically instead."),
+                    br(),
+                    br(),
+                    h3("Data Resources"),
+                    navbarPage('GEO', 
+                               tabPanel("table",
+                                        fluidPage(
+                                          fluidRow(dataTableOutput("dt_table")))),
+                               
+                    ),
+               
+                    
+                    
             ),
             
             # Seconed tab content
@@ -55,14 +68,16 @@ ui <- dashboardPage(
                     h2("Gene Summarize"),
                     p("The tissue-specific pattern of mRNA expression can indicate important clues about gene function. High-density oligonucleotide arrays offer the opportunity to examine patterns of gene expression on a genome scale. Toward this end, we have designed custom arrays that interrogate the expression of the vast majority of protein-encoding human and mouse genes and have used them to profile a panel of 79 human and 61 mouse tissues. The resulting data set provides the expression patterns for thousands of predicted genes, as well as known and poorly characterized genes, from mice and humans. We have explored this data set for global trends in gene expression, evaluated commonly used lines of evidence in gene prediction methodologies, and investigated patterns indicative of chromosomal organization of transcription. We describe hundreds of regions of correlated transcription and show that some are subject to both tissue and parental allele-specific expression, suggesting a link between spatial expression and imprinting."),
                     br(),
-                    h4("NM_000544"),
-                    p("Gene Symbol: TAP2"),
+                    h3("TAP2"),
                     p(strong("TAP2"), " is a gene in humans that encodes the protein ",strong("Antigen peptide transporter 2.")),
-                    br(),
-                    h4("NM_004803"),
-                    p("Gene Symbol: SLC22A14"),
+                    h3("SLC22A14"),
                     p(strong("Solute carrier family 22 member 14"), " is a protein that in humans is encoded by the SLC22A14 gene."),
-                   
+                    br(),
+                    navbarPage('Gene', 
+                               tabPanel("table",
+                                        fluidPage(
+                                          fluidRow(dataTableOutput("dt_table1")))),
+                    ),
                     
             ),
             
@@ -114,6 +129,33 @@ ui <- dashboardPage(
 
 
 server <- function(input, output) {
+  df_table <- reactive({
+    data.table(
+      links = c(
+        paste0("<a href='https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE51675'>", "GEO51675", "</a>"),
+        paste0("<a href='https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE1563'>", "GEO1563", "</a>"),
+        paste0("<a href='https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE46474'>", "GEO46474", "</a>")),
+      Site = c('https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE51675', 'https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE1563', 'https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE46474')
+    )
+    
+  })
+  output$dt_table <- renderDataTable(
+    df_table(), escape = FALSE, options = list(pageLength = 3))
+  
+  
+  df_table1 <- reactive({
+    data.table(
+      links = c(
+        paste0("<a href='http://biogps.org/#goto=genereport&id=6891'>", "TAP2", "</a>"),
+        paste0("<a href='http://biogps.org/#goto=genereport&id=9389'>", "SLC22A14", "</a>")),
+      Site = c('http://biogps.org/#goto=genereport&id=6891', 'http://biogps.org/#goto=genereport&id=9389')
+    )
+    
+  })
+  output$dt_table1 <- renderDataTable(
+    df_table1(), escape = FALSE, options = list(pageLength = 2))
+  
+  
   # ensures age is between 18 and 68
   ivAge <- InputValidator$new()
   ivAge$add_rule("age", sv_optional())
@@ -150,7 +192,7 @@ server <- function(input, output) {
     predicted_outcome <- predict(final_model, input_data)
 
     
-    HTML(sprintf("The predicted kidney transplantation result for given inputs is <strong>%s%</strong>.", 
+    HTML(sprintf("The predicted kidney transplantation result for given inputs is  <strong>%s</strong>.", 
                  predicted_outcome))
   })
 }
