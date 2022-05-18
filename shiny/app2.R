@@ -11,12 +11,15 @@ library(shiny)
 library(glue)
 library(tidyverse)
 library(shinydashboard)
-
+library(shinyvalidate)
+library(dashboardthemes)
+library(naivebayes)
 load("shiny.rdata")
 #final_model <- final_model
 
 # Define UI for application that draws a histogram
 ui <- dashboardPage(
+    skin = "green", 
     dashboardHeader(title = "kidney transplantation"),
     dashboardSidebar(
         sidebarMenu(
@@ -26,6 +29,9 @@ ui <- dashboardPage(
         )
     ),
     dashboardBody(
+     shinyDashboardThemes(
+      theme = "grey_light"
+    ),
         tabItems(
             # First tab content
             tabItem(tabName = "introduction",
@@ -49,18 +55,14 @@ ui <- dashboardPage(
                     h2("Gene Summarize"),
                     p("The tissue-specific pattern of mRNA expression can indicate important clues about gene function. High-density oligonucleotide arrays offer the opportunity to examine patterns of gene expression on a genome scale. Toward this end, we have designed custom arrays that interrogate the expression of the vast majority of protein-encoding human and mouse genes and have used them to profile a panel of 79 human and 61 mouse tissues. The resulting data set provides the expression patterns for thousands of predicted genes, as well as known and poorly characterized genes, from mice and humans. We have explored this data set for global trends in gene expression, evaluated commonly used lines of evidence in gene prediction methodologies, and investigated patterns indicative of chromosomal organization of transcription. We describe hundreds of regions of correlated transcription and show that some are subject to both tissue and parental allele-specific expression, suggesting a link between spatial expression and imprinting."),
                     br(),
-                    h4("NM_005526"),
-                    p("Gene Symbol: HSF1"),
-                    p(strong("Heat shock factor 1 (HSF1)"), "is a protein that in humans is encoded by the HSF1 gene. HSF1 is highly conserved in eukaryotes and is the primary mediator of transcriptional responses to proteotoxic stress with important roles in non-stress regulation such as development and metabolism."),
+                    h4("NM_000544"),
+                    p("Gene Symbol: TAP2"),
+                    p(strong("TAP2"), " is a gene in humans that encodes the protein ",strong("Antigen peptide transporter 2.")),
                     br(),
-                    h4("NM_014654"),
-                    p("Gene Symbol: SDC3"),
-                    p(strong("Syndecan-3 (SDC3)"), " is a protein that in humans is encoded by the SDC3 gene."),
-                    br(),
-                    h4("NM_012474"),
-                    p("Gene Symbol: UCK2"),
-                    p(strong("Uridine-cytidine kinase 2 (UCK2)"),"is an enzyme that in humans is encoded by the UCK2 gene."),
-                    p("The protein encoded by this gene catalyzes the phosphorylation of uridine and cytidine to uridine monophosphate (UMP) and cytidine monophosphate (CMP), respectively. This is the first step in the production of the pyrimidine nucleoside triphosphates required for RNA and DNA synthesis. In addition, an allele of this gene may play a role in mediating nonhumoral immunity to Hemophilus influenzae type B."),
+                    h4("NM_004803"),
+                    p("Gene Symbol: SLC22A14"),
+                    p(strong("Solute carrier family 22 member 14"), " is a protein that in humans is encoded by the SLC22A14 gene."),
+                   
                     
             ),
             
@@ -76,7 +78,7 @@ ui <- dashboardPage(
                               numericInput("age", "Age:",
                                            min = 18,
                                            max = 68,
-                                           value = NULL
+                                           value = 18
                                  ),
                               numericInput("NM_000544",
                                            "NM_000544 (optional):",
@@ -112,15 +114,41 @@ ui <- dashboardPage(
 
 
 server <- function(input, output) {
+  # ensures age is between 18 and 68
+  ivAge <- InputValidator$new()
+  ivAge$add_rule("age", sv_optional())
+  ivAge$add_rule("age", sv_between(18, 68))
+  ivAge$enable()
+  
+  # ensures NM_000544 is between 3 and 5
+  ivNM_000544 <- InputValidator$new()
+  ivNM_000544$add_rule("NM_000544", sv_between(3, 5))
+  ivNM_000544$enable()
+  
+  # ensures NM_004803 is between 4 and 6
+  ivNM_004803 <- InputValidator$new()
+  ivNM_004803$add_rule("NM_004803", sv_between(4, 6))
+  ivNM_004803$enable()
+  
+
+
   output$modelPrediction <- shiny::renderUI({
+    if (!ivNM_000544$is_valid() || !ivNM_004803$is_valid()) {
+      output = sprintf("Predicted the success of a kidney transplant composition cannot be computed since one or more inputs are invalid.")
+      return(output)
+    }
+   
     input_data <- data.frame(
-      sex = input$sex,
       age = input$age,
+      sex = input$sex,
       NM_000544 = input$NM_000544,
       NM_004803 = input$NM_004803
     )
+
     # calculation
+
     predicted_outcome <- predict(final_model, input_data)
+
     
     HTML(sprintf(strong("The predicted kidney transplantation result for given inputs is <strong>%.2f%%</strong>.")
     ))
