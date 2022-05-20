@@ -629,17 +629,91 @@ for (i in 3: (length(X_test3))) {
 y_test3 = as.factor(outcome3)
 
 predictions1 = predict(final_model, X_test1)
-table(Predictions = predictions1, Class = y_test1)</code></pre>
-<pre><code>##            Class
-## Predictions Rejection Stable
-##   Rejection         3      0
-##   Stable            6      9</code></pre>
+table(Predictions = predictions1, Class = y_test1) %&gt;% kable(caption = &quot;Confusion table when testing on GSE51675&quot;)</code></pre>
+<table>
+<caption>Confusion table when testing on GSE51675</caption>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">Rejection</th>
+<th align="right">Stable</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Rejection</td>
+<td align="right">3</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">Stable</td>
+<td align="right">6</td>
+<td align="right">9</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>performance1 = data.frame(Accuracy = (3+9)/(3+0+6+9), Sensitivity = (3)/(3+6), Specificity = (9)/(0+9))
+performance1 %&gt;% kable(caption = &quot;Performance evaluation on GSE51675&quot;, digits = 2)</code></pre>
+<table>
+<caption>Performance evaluation on GSE51675</caption>
+<thead>
+<tr class="header">
+<th align="right">Accuracy</th>
+<th align="right">Sensitivity</th>
+<th align="right">Specificity</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">0.67</td>
+<td align="right">0.33</td>
+<td align="right">1</td>
+</tr>
+</tbody>
+</table>
 <pre class="r"><code>predictions3 = predict(final_model, X_test3)
-table(Predictions = predictions3, Class = y_test3)</code></pre>
-<pre><code>##            Class
-## Predictions Rejection Stable
-##   Rejection         7      1
-##   Stable           13     19</code></pre>
+table(Predictions = predictions3, Class = y_test3) %&gt;% kable(caption = &quot;Confusion table when testing on GSE46474&quot;)</code></pre>
+<table>
+<caption>Confusion table when testing on GSE46474</caption>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">Rejection</th>
+<th align="right">Stable</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Rejection</td>
+<td align="right">7</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">Stable</td>
+<td align="right">13</td>
+<td align="right">19</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>performance3 = data.frame(Accuracy = (7+19)/(7+1+13+19), Sensitivity = (7)/(7+13), Specificity = (19)/(1+19))
+performance3 %&gt;% kable(caption = &quot;Performance evaluation on GSE46474&quot;, digits = 2)</code></pre>
+<table>
+<caption>Performance evaluation on GSE46474</caption>
+<thead>
+<tr class="header">
+<th align="right">Accuracy</th>
+<th align="right">Sensitivity</th>
+<th align="right">Specificity</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">0.65</td>
+<td align="right">0.35</td>
+<td align="right">0.95</td>
+</tr>
+</tbody>
+</table>
 <pre class="r"><code># to be done</code></pre>
 <pre class="r"><code># to be done
 # for nb, no tuning applicable</code></pre>

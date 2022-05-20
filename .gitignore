@@ -43,3 +43,4 @@ vignettes/*.pdf
 r/Alistair-s-temp-work.RData
 r/extra gse.RData
 *.log
+report/all_in_one.RData

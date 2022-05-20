@@ -123,7 +123,7 @@ ui <- dashboardPage(
                                br(),
                                h4("How reliable is this result?"),
                                p("Our model has an average accuracy of around 89% in a repeated cross validation evaluation."),
-                               p("The model is also tested on 2 independent datasets, giving accuracies of 67% and 65%."),
+                               p("The model is also tested on 2 independent datasets, giving accuracies of 67% and 65%, sensitivities of 33% and 35%, and specificities of 100% and 95%."),
                              )
                           )
             )

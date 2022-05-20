@@ -28,6 +28,7 @@ library(equatiomatic)
 library(randomForest)
 library(class)
 library(naivebayes)
+library(knitr)
 
 load("datasets.rdata")
 
@@ -425,10 +426,16 @@ for (i in 3: (length(X_test3))) {
 y_test3 = as.factor(outcome3)
 
 predictions1 = predict(final_model, X_test1)
-table(Predictions = predictions1, Class = y_test1)
+table(Predictions = predictions1, Class = y_test1) %>% kable(caption = "Confusion table when testing on GSE51675")
+
+performance1 = data.frame(Accuracy = (3+9)/(3+0+6+9), Sensitivity = (3)/(3+6), Specificity = (9)/(0+9))
+performance1 %>% kable(caption = "Performance evaluation on GSE51675", digits = 2)
 
 predictions3 = predict(final_model, X_test3)
-table(Predictions = predictions3, Class = y_test3)
+table(Predictions = predictions3, Class = y_test3) %>% kable(caption = "Confusion table when testing on GSE46474")
+
+performance3 = data.frame(Accuracy = (7+19)/(7+1+13+19), Sensitivity = (7)/(7+13), Specificity = (19)/(1+19))
+performance3 %>% kable(caption = "Performance evaluation on GSE46474", digits = 2)
 ```
 
 ```{r fairness}
