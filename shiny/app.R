@@ -16,7 +16,7 @@ library(dashboardthemes)
 library(naivebayes)
 library(DT)
 library(data.table)
-load("shiny.rdata")
+load("shiny.RData")
 #final_model <- final_model
 
 # Define UI for application that draws a histogram
@@ -168,12 +168,12 @@ server <- function(input, output) {
   
   # ensures NM_000544 is between 3 and 5
   ivNM_000544 <- InputValidator$new()
-  ivNM_000544$add_rule("NM_000544", sv_between(3, 5))
+  ivNM_000544$add_rule("NM_000544", sv_between(3, 6))
   ivNM_000544$enable()
   
   # ensures NM_004803 is between 4 and 6
   ivNM_004803 <- InputValidator$new()
-  ivNM_004803$add_rule("NM_004803", sv_between(4, 6))
+  ivNM_004803$add_rule("NM_004803", sv_between(3, 6))
   ivNM_004803$enable()
   
 

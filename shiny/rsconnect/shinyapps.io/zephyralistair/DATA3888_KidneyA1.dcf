@@ -1,0 +1,14 @@
+name: DATA3888_KidneyA1
+title: DATA3888_KidneyA1
+username:
+account: zephyralistair
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 6347409
+bundleId: 5930670
+url: https://zephyralistair.shinyapps.io/DATA3888_KidneyA1/
+when: 1653156898.63403
+lastSyncTime: 1653156898.63403
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: Link.txt|sample
