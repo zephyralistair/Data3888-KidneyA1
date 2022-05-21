@@ -179,7 +179,7 @@ server <- function(input, output) {
 
 
   output$modelPrediction <- shiny::renderUI({
-    if (!ivNM_000544$is_valid() || !ivNM_004803$is_valid()) {
+    if (!ivAge$is_valid() || !ivNM_000544$is_valid() || !ivNM_004803$is_valid()) {
       output = sprintf("The outcome of your patient's a kidney transplant cannot be predicted since one or more inputs are invalid.")
       return(output)
     }
@@ -195,7 +195,7 @@ server <- function(input, output) {
    
     input_data <- data.frame(
       age = (input$age - mean_age) / sd_age,
-      gender = input$gender,
+      sex = input$gender,
       NM_000544 = (input$NM_000544 - mean_NM_000544) / sd_NM_000544,
       NM_004803 = (input$NM_004803 - mean_NM_004803) / sd_NM_004803
     )
