@@ -11,3 +11,4 @@ Group Project
 * Meeting 5.8 - https://docs.google.com/document/d/1Sn9Y4TQ0fCsfftRZ_muPJYqAvimWWPIBqpxB4Q6tyFU/edit
 * Presentation Scaffold - https://docs.google.com/document/d/1_Ga5vY8bMl0UnjRpmRoNnIWwttQOQuv4xRDVnmDjtI8/edit
 * Contribution Table - https://docs.google.com/spreadsheets/d/1qJ8KIMYYoh1Pv17JIHg4kOU00JK_judb-8gJwrbHT8A/edit#gid=0
+* Presentation Slides- https://docs.google.com/presentation/d/17pQkvs3JEpADR4BaCHKv_jvGcfFMd31ikCwlXEyQyzs/edit#slide=id.g12ccc250acc_0_26
