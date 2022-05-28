@@ -29,6 +29,7 @@ library(randomForest)
 library(class)
 library(naivebayes)
 library(knitr)
+library(fairness)
 
 load("datasets.rdata")
 
@@ -307,10 +308,23 @@ accuracy <- function(true, predicted) {
   return(sum(true == predicted)/length(true))
 }
 
+sensitivity <- function(predicted, true) {
+  predicted = factor(predicted, levels = c("Rejection", "Stable"))
+  confusion = table(predicted, true)
+  return(confusion[1,1]/(confusion[1,1]+confusion[2,1]))
+}
+
+specificity <- function(predicted, true) {
+  predicted = factor(predicted, levels = c("Rejection", "Stable"))
+  confusion = table(predicted, true)
+  return(confusion[2,2]/(confusion[1,2]+confusion[2,2]))
+}
+
 X_combined = combined_df %>% select(-outcome)
 y_combined = combined_df %>% pull(outcome)
 cvK = 5    # Number of CV folds
 n_sim = 50 # Number of repeats
+
 cv_accuracy_lr = numeric(n_sim) # Vector to store averaged CV accuracies
 cv_accuracy_rf = numeric(n_sim)
 cv_accuracy_svm = numeric(n_sim)
@@ -318,15 +332,44 @@ cv_accuracy_nb = numeric(n_sim)
 cv_accuracy_knn = numeric(n_sim)
 # cv_accuracy_dt = numeric(n_sim)
 
+cv_sensitivity_lr = numeric(n_sim)
+cv_sensitivity_rf = numeric(n_sim)
+cv_sensitivity_svm = numeric(n_sim)
+cv_sensitivity_nb = numeric(n_sim)
+cv_sensitivity_knn = numeric(n_sim)
+# cv_sensitivity_dt = numeric(n_sim)
+
+cv_specificity_lr = numeric(n_sim)
+cv_specificity_rf = numeric(n_sim)
+cv_specificity_svm = numeric(n_sim)
+cv_specificity_nb = numeric(n_sim)
+cv_specificity_knn = numeric(n_sim)
+# cv_specificity_dt = numeric(n_sim)
+
 for (i in 1:n_sim) {
   
   cvSets = cvFolds(nrow(combined_df), cvK) # Folds object for cross-validation
+  
   cv_accuracy_folds_lr = numeric(cvK) # Vector to store accuracy for each fold
   cv_accuracy_folds_rf = numeric(cvK)
   cv_accuracy_folds_svm = numeric(cvK)
   cv_accuracy_folds_nb = numeric(cvK)
   cv_accuracy_folds_knn = numeric(cvK)
   # cv_accuracy_folds_dt = numeric(cvK)
+  
+  cv_sensitivity_folds_lr = numeric(cvK) # Vector to store sensitivity for each fold
+  cv_sensitivity_folds_rf = numeric(cvK)
+  cv_sensitivity_folds_svm = numeric(cvK)
+  cv_sensitivity_folds_nb = numeric(cvK)
+  cv_sensitivity_folds_knn = numeric(cvK)
+  # cv_sensitivity_folds_dt = numeric(cvK)
+  
+  cv_specificity_folds_lr = numeric(cvK) # Vector to store specificity for each fold
+  cv_specificity_folds_rf = numeric(cvK)
+  cv_specificity_folds_svm = numeric(cvK)
+  cv_specificity_folds_nb = numeric(cvK)
+  cv_specificity_folds_knn = numeric(cvK)
+  # cv_specificity_folds_dt = numeric(cvK)
   
   for (j in 1:cvK) {
     
@@ -346,18 +389,28 @@ for (i in 1:n_sim) {
     predictions = ifelse(round(predicted_probs) == 1, 
                          "Stable", "Rejection")
     cv_accuracy_folds_lr[j] = accuracy(y_test, predictions)
+    cv_sensitivity_folds_lr[j] = sensitivity(predictions, y_test)
+    cv_specificity_folds_lr[j] = specificity(predictions, y_test)
     
     predictions = predict(current_rf_fit, X_test)
     cv_accuracy_folds_rf[j] = accuracy(y_test, predictions)
+    cv_sensitivity_folds_rf[j] = sensitivity(predictions, y_test)
+    cv_specificity_folds_rf[j] = specificity(predictions, y_test)
     
     predictions = predict(current_svm_fit, X_test %>% select(-sex))
     cv_accuracy_folds_svm[j] = accuracy(y_test, predictions)
+    cv_sensitivity_folds_svm[j] = sensitivity(predictions, y_test)
+    cv_specificity_folds_svm[j] = specificity(predictions, y_test)
 
     predictions = predict(current_nb_fit, X_test)
     cv_accuracy_folds_nb[j] = accuracy(y_test, predictions)
+    cv_sensitivity_folds_nb[j] = sensitivity(predictions, y_test)
+    cv_specificity_folds_nb[j] = specificity(predictions, y_test)
     
     predictions = knn(train %>% select(-outcome) %>% select(-sex), test = X_test %>% select(-sex), cl = train$outcome, k = 6)
     cv_accuracy_folds_knn[j] = accuracy(y_test, predictions)
+    cv_sensitivity_folds_knn[j] = sensitivity(predictions, y_test)
+    cv_specificity_folds_knn[j] = specificity(predictions, y_test)
     
     # predictions = predict(current_dt_fit, X_test)
     # cv_accuracy_folds_dt[j] = accuracy(y_test, predictions)
@@ -370,30 +423,70 @@ for (i in 1:n_sim) {
   cv_accuracy_knn[i] = mean(cv_accuracy_folds_knn)
   # cv_accuracy_dt[i] = mean(cv_accuracy_folds_dt)
   
+  cv_sensitivity_lr[i] = mean(cv_sensitivity_folds_lr)
+  cv_sensitivity_rf[i] = mean(cv_sensitivity_folds_rf)
+  cv_sensitivity_svm[i] = mean(cv_sensitivity_folds_svm)
+  cv_sensitivity_nb[i] = mean(cv_sensitivity_folds_nb)
+  cv_sensitivity_knn[i] = mean(cv_sensitivity_folds_knn)
+  # cv_sensitivity_dt[i] = mean(cv_sensitivity_folds_dt)
+
+  cv_specificity_lr[i] = mean(cv_specificity_folds_lr)
+  cv_specificity_rf[i] = mean(cv_specificity_folds_rf)
+  cv_specificity_svm[i] = mean(cv_specificity_folds_svm)
+  cv_specificity_nb[i] = mean(cv_specificity_folds_nb)
+  cv_specificity_knn[i] = mean(cv_specificity_folds_knn)
+  # cv_specificity_dt[i] = mean(cv_specificity_folds_dt)
+  
 }
 
-df_lr = cbind(Accuracy = cv_accuracy_lr, Classifier = "Weighted Logistic")
-df_rf = cbind(Accuracy = cv_accuracy_rf, Classifier = "Random Forest")
-df_svm = cbind(Accuracy = cv_accuracy_svm, Classifier = "Support Vector Machine")
-df_nb = cbind(Accuracy = cv_accuracy_nb, Classifier = "Naive Bayes")
-df_knn = cbind(Accuracy = cv_accuracy_knn, Classifier = "6-Nearest Neighbor")
-# df_dt = cbind(Accuracy = cv_accuracy_dt, Classifier = "Decision Trees")
+df_lr = cbind(Performance = cv_accuracy_lr, Classifier = "Weighted Logistic", Type = "Accuracy")
+df_rf = cbind(Performance = cv_accuracy_rf, Classifier = "Random Forest", Type = "Accuracy")
+df_svm = cbind(Performance = cv_accuracy_svm, Classifier = "Support Vector Machine", Type = "Accuracy")
+df_nb = cbind(Performance = cv_accuracy_nb, Classifier = "Naive Bayes", Type = "Accuracy")
+df_knn = cbind(Performance = cv_accuracy_knn, Classifier = "6-Nearest Neighbor", Type = "Accuracy")
 
-df_classifier_cv = data.frame(rbind(df_lr, df_rf, df_svm, df_nb, df_knn))
+df2_lr = cbind(Performance = cv_sensitivity_lr, Classifier = "Weighted Logistic", Type = "Sensitivity")
+df2_rf = cbind(Performance = cv_sensitivity_rf, Classifier = "Random Forest", Type = "Sensitivity")
+df2_svm = cbind(Performance = cv_sensitivity_svm, Classifier = "Support Vector Machine", Type = "Sensitivity")
+df2_nb = cbind(Performance = cv_sensitivity_nb, Classifier = "Naive Bayes", Type = "Sensitivity")
+df2_knn = cbind(Performance = cv_sensitivity_knn, Classifier = "6-Nearest Neighbor", Type = "Sensitivity")
+
+df3_lr = cbind(Performance = cv_specificity_lr, Classifier = "Weighted Logistic", Type = "Specificity")
+df3_rf = cbind(Performance = cv_specificity_rf, Classifier = "Random Forest", Type = "Specificity")
+df3_svm = cbind(Performance = cv_specificity_svm, Classifier = "Support Vector Machine", Type = "Specificity")
+df3_nb = cbind(Performance = cv_specificity_nb, Classifier = "Naive Bayes", Type = "Specificity")
+df3_knn = cbind(Performance = cv_specificity_knn, Classifier = "6-Nearest Neighbor", Type = "Specificity")
+
+df_classifier_cv = data.frame(rbind(df_lr, df_rf, df_svm, df_nb, df_knn, df2_lr, df2_rf, df2_svm, df2_nb, df2_knn, df3_lr, df3_rf, df3_svm, df3_nb, df3_knn))
 df_classifier_cv$Classifier = factor(df_classifier_cv$Classifier)
-df_classifier_cv$Accuracy = as.numeric(df_classifier_cv$Accuracy)
+df_classifier_cv$Type = factor(df_classifier_cv$Type)
+df_classifier_cv$Performance = as.numeric(df_classifier_cv$Performance)
 
-ggplot(df_classifier_cv, aes(x = Classifier, y = Accuracy)) +
-  geom_boxplot(outlier.color = "steelblue", outlier.alpha = 0.9) +
-  geom_jitter(size = 1, alpha = 0.9, width = 0.25, color = "steelblue") +
-  labs(title = "Distribution of mean 5-fold CV accuracies across 50 repeats",
-       x = "Classifier", y = "Mean 5-fold CV accuracy") +
-  theme(plot.title = element_text(hjust = 0.5, size = 12),
-        panel.border = element_rect(colour = "black", fill = NA, size = 1))
+ggplot(df_classifier_cv, aes(Classifier, Performance))+
+  stat_boxplot(aes(fill=Type), geom="errorbar", width=0.1, size=0.5, position=position_dodge(0.6), color="steelblue")+
+  geom_boxplot(aes(fill=Type),
+               position=position_dodge(0.6),
+               size=0.5,
+               width=0.5,
+               color="steelblue",
+               outlier.color = "steelblue",
+               outlier.fill = "indianred2",
+               outlier.shape = 19,
+               outlier.size = 1,
+               outlier.stroke = 0.5,
+               outlier.alpha = 45,
+               notch = F,
+               notchwidth = 0.5)+
+  theme(axis.title = element_text(size=18),
+        axis.text = element_text(size=10),
+        axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) + 
+  labs(title = "Distribution of mean 5-fold CV performances across 50 repeats") + 
+  coord_flip()
 ```
 
 ```{r independent_datasets_performance, warning=F}
-final_model = naive_bayes(outcome ~ ., train)
+final_nb = naive_bayes(outcome ~ ., combined_df)
+final_lr = glm(outcome ~ ., data = combined_df, family = binomial(link = "logit"), maxit = 10000)
 
 X_test1 = pdata1 %>% 
   select(c("age:ch1", "gender:ch1")) %>% 
@@ -425,25 +518,65 @@ for (i in 3: (length(X_test3))) {
 }
 y_test3 = as.factor(outcome3)
 
-predictions1 = predict(final_model, X_test1)
-table(Predictions = predictions1, Class = y_test1) %>% kable(caption = "Confusion table when testing on GSE51675")
+# predictions1 = predict(final_model, X_test1)
+predicted_probs1 = predict(final_lr, X_test1, type = "response")
+predictions1 = ifelse(round(predicted_probs1) == 1, "Stable", "Rejection")
+tb1 = table(Predictions = predictions1, Class = y_test1)
+# tb1 %>% kable(caption = "Confusion table when testing on GSE51675")
 
-performance1 = data.frame(Accuracy = (3+9)/(3+0+6+9), Sensitivity = (3)/(3+6), Specificity = (9)/(0+9))
-performance1 %>% kable(caption = "Performance evaluation on GSE51675", digits = 2)
+performance1 = data.frame(Accuracy = (tb1[1,1]+tb1[2,2])/(sum(tb1)), Sensitivity = (tb1[1,1])/(sum(tb1[,1])), Specificity = (tb1[2,2])/(sum(tb1[,2])))
+# performance1 %>% kable(caption = "Performance evaluation on GSE51675", digits = 2)
 
-predictions3 = predict(final_model, X_test3)
-table(Predictions = predictions3, Class = y_test3) %>% kable(caption = "Confusion table when testing on GSE46474")
+# predictions3 = predict(final_model, X_test3)
+predicted_probs3 = predict(final_lr, X_test3, type = "response")
+predictions3 = ifelse(round(predicted_probs3) == 1, "Stable", "Rejection")
+tb3 = table(Predictions = predictions3, Class = y_test3)
+# tb3 %>% kable(caption = "Confusion table when testing on GSE46474")
 
-performance3 = data.frame(Accuracy = (7+19)/(7+1+13+19), Sensitivity = (7)/(7+13), Specificity = (19)/(1+19))
-performance3 %>% kable(caption = "Performance evaluation on GSE46474", digits = 2)
+performance3 = data.frame(Accuracy = (tb3[1,1]+tb3[2,2])/(sum(tb3)), Sensitivity = (tb3[1,1])/(sum(tb3[,1])), Specificity = (tb3[2,2])/(sum(tb3[,2])))
+# performance3 %>% kable(caption = "Performance evaluation on GSE46474", digits = 2)
+
+df_lr = rbind(GSE51675.LR = performance1, GSE46474.LR = performance3)
+
+
+predictions1 = predict(final_nb, X_test1)
+# predicted_probs1 = predict(final_lr, X_test1, type = "response")
+# predictions1 = ifelse(round(predicted_probs1) == 1, "Stable", "Rejection")
+tb1 = table(Predictions = predictions1, Class = y_test1)
+# tb1 %>% kable(caption = "Confusion table when testing on GSE51675")
+
+performance1 = data.frame(Accuracy = (tb1[1,1]+tb1[2,2])/(sum(tb1)), Sensitivity = (tb1[1,1])/(sum(tb1[,1])), Specificity = (tb1[2,2])/(sum(tb1[,2])))
+# performance1 %>% kable(caption = "Performance evaluation on GSE51675", digits = 2)
+
+predictions3 = predict(final_nb, X_test3)
+# predicted_probs3 = predict(final_lr, X_test3, type = "response")
+# predictions3 = ifelse(round(predicted_probs3) == 1, "Stable", "Rejection")
+tb3 = table(Predictions = predictions3, Class = y_test3)
+# tb3 %>% kable(caption = "Confusion table when testing on GSE46474")
+
+performance3 = data.frame(Accuracy = (tb3[1,1]+tb3[2,2])/(sum(tb3)), Sensitivity = (tb3[1,1])/(sum(tb3[,1])), Specificity = (tb3[2,2])/(sum(tb3[,2])))
+# performance3 %>% kable(caption = "Performance evaluation on GSE46474", digits = 2)
+
+df_nb = rbind(GSE51675.NB = performance1, GSE46474.NB = performance3)
+
+rbind(df_lr, df_nb) %>% kable(caption = "Performance evaluation of NB and LR classifier on independent datasets", digit = 2)
+
+final_model = final_nb
 ```
 
 ```{r fairness}
-# to be done
+outcome = predict(final_model, combined_df %>% select(-outcome))
+fairness_df = combined_df
+fairness_df$predictions = outcome
+acc_parity(data    = fairness_df, 
+           outcome = 'outcome',
+           outcome_base = 'Stable',
+           preds = 'predictions',
+           group   = 'sex',
+           base    = 'Male')$Metric_plot
 ```
 
 ```{r stability_hyperparameters_tuning}
-# to be done
 # for nb, no tuning applicable
 ```
 
