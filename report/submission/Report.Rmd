@@ -1,6 +1,6 @@
 ---
 title: "Building a Kidney Graft Outcome Predictor Using Top 2 Gene Expression Values, Gender and Age"
-author: 'KidneyA1: Qinlin(Alistair) Gu, Danning Sun, Hangyi Wu, Xuening Ni, Yuye(Giri) Zhou'
+author: 'KidneyA1: Qinlin(Alistair) Gu, Danying Sun, Hangyi Wu, Xuening Ni, Yuye(Giri) Zhou'
 date: "2022/5/30"
 output: 
   rmdformats::downcute:
