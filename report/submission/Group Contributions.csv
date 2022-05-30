@@ -1,0 +1,23 @@
+Item,Contributor
+"Coordination, planning and communication with the tutors",Qinlin Gu
+Meeting minutes mostly written by,Qinlin Gu
+Initial data analysis,All 5 of us
+Project's proposed methods design,Qinlin Gu
+Code - most,Qinlin Gu
+    Code - volcano plot polish,Daisy Sun
+    Code - weighted logistic model variable selection,Xuening Ni
+    Evaluation - fairness,"Giri Zhou, Hangyi Wu"
+Flow chart,"Daisy Sun, Qinlin Gu, Hangyi Wu"
+"Presentation, shiny, report scaffold",Qinlin Gu
+Shiny app,"Giri Zhou, Xuening Ni, Hangyi Wu"
+Shiny - polish,Qinlin Gu
+Presentation - scripts,All 5 of us
+Presentation - slides,"Danying Sun, Xuening Ni, Qinlin Gu, Hangyi Wu"
+    Evaluation - include more before model selection,Qinlin Gu
+    Evaluation - reproducible fairness rework,Qinlin Gu
+Report,All 5 of us
+    Report - data summary,Giri Zhou
+    Report - more limitations & future work,Hangyi Wu
+    Report - RMD template,Daisy Sun
+    Report - executive summary,"Xuening Ni, Daisy Sun"
+"    Report - RMD code, polish, checking for grammar mistakes, etc.",Qnlin Gu

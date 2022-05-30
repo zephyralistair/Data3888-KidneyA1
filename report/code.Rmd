@@ -144,7 +144,7 @@ ggplot(df3, aes(df3$logFC, -log10(df3$P.Value))) +
     xlab("log2 fold change") + ylab("-log10 p-value")
 ```
 
-```{r feature_selection, message=F}
+```{r feature_selection, message=F, cache=T}
 set.seed(seed)
 
 accuracy <- function(true, predicted) {
@@ -208,32 +208,6 @@ for (i in 1:n_sim) {
     n_list = append(n_list, n)
     genes_list = append(genes_list, acc_genes)
 
-  #   genes = rownames(topTable(fit2, number = n))
-  #   combined_df = cbind(clinical_df, t(emat2[genes, ])) %>%
-  #     mutate(outcome = as.factor(outcome2)) %>%
-  #     drop_na() %>%
-  #     mutate(sex = as.factor(sex))
-  #   for (i in 3: (length(combined_df) - 1)) {
-  #     combined_df[, i] = combined_df[, i] / length(genes)
-  #     mean = mean(combined_df[, i])
-  #     sd = sd(combined_df[, i])
-  #     combined_df[, i] = (combined_df[, i] - mean) / sd
-  #   }
-  # 
-  #   cvSets = cvFolds(nrow(combined_df), cvK)
-  #   test_id = cvSets$subsets[cvSets$which == j]
-  # 
-  #   X_combined = combined_df %>% select(-outcome)
-  #   y_combined = combined_df %>% pull(outcome)
-  # 
-  #   train = combined_df[-test_id,]
-  #   X_test = X_combined[test_id,]
-  #   y_test = y_combined[test_id]
-  # 
-  #   current_rf_fit = randomForest(x = train %>% select(-outcome), y = train$outcome)
-  #   predictions = predict(current_rf_fit, X_test)
-  #   cv_accuracy_folds[j] = accuracy(y_test, predictions)
-  # 
   }
 }
 ```
@@ -562,6 +536,12 @@ df_nb = rbind(GSE51675.NB = performance1, GSE46474.NB = performance3)
 rbind(df_lr, df_nb) %>% kable(caption = "Performance evaluation of NB and LR classifier on independent datasets", digit = 2)
 
 final_model = final_nb
+
+df_performance_nb = df_classifier_cv[df_classifier_cv$Classifier == "Naive Bayes",]
+
+mean(df_performance_nb[df_performance_nb$Type == "Accuracy",]$Performance, na.rm=TRUE)
+mean(df_performance_nb[df_performance_nb$Type == "Sensitivity",]$Performance, na.rm=TRUE)
+mean(df_performance_nb[df_performance_nb$Type == "Specificity",]$Performance, na.rm=TRUE)
 ```
 
 ```{r fairness}

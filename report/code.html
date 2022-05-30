@@ -419,32 +419,6 @@ for (i in 1:n_sim) {
     n_list = append(n_list, n)
     genes_list = append(genes_list, acc_genes)
 
-  #   genes = rownames(topTable(fit2, number = n))
-  #   combined_df = cbind(clinical_df, t(emat2[genes, ])) %&gt;%
-  #     mutate(outcome = as.factor(outcome2)) %&gt;%
-  #     drop_na() %&gt;%
-  #     mutate(sex = as.factor(sex))
-  #   for (i in 3: (length(combined_df) - 1)) {
-  #     combined_df[, i] = combined_df[, i] / length(genes)
-  #     mean = mean(combined_df[, i])
-  #     sd = sd(combined_df[, i])
-  #     combined_df[, i] = (combined_df[, i] - mean) / sd
-  #   }
-  # 
-  #   cvSets = cvFolds(nrow(combined_df), cvK)
-  #   test_id = cvSets$subsets[cvSets$which == j]
-  # 
-  #   X_combined = combined_df %&gt;% select(-outcome)
-  #   y_combined = combined_df %&gt;% pull(outcome)
-  # 
-  #   train = combined_df[-test_id,]
-  #   X_test = X_combined[test_id,]
-  #   y_test = y_combined[test_id]
-  # 
-  #   current_rf_fit = randomForest(x = train %&gt;% select(-outcome), y = train$outcome)
-  #   predictions = predict(current_rf_fit, X_test)
-  #   cv_accuracy_folds[j] = accuracy(y_test, predictions)
-  # 
   }
 }</code></pre>
 <pre class="r"><code>genes_table = data.frame(table(genes_list))
@@ -799,7 +773,16 @@ rbind(df_lr, df_nb) %&gt;% kable(caption = &quot;Performance evaluation of NB an
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>final_model = final_nb</code></pre>
+<pre class="r"><code>final_model = final_nb
+
+df_performance_nb = df_classifier_cv[df_classifier_cv$Classifier == &quot;Naive Bayes&quot;,]
+
+mean(df_performance_nb[df_performance_nb$Type == &quot;Accuracy&quot;,]$Performance, na.rm=TRUE)</code></pre>
+<pre><code>## [1] 0.8811636</code></pre>
+<pre class="r"><code>mean(df_performance_nb[df_performance_nb$Type == &quot;Sensitivity&quot;,]$Performance, na.rm=TRUE)</code></pre>
+<pre><code>## [1] 0.6104545</code></pre>
+<pre class="r"><code>mean(df_performance_nb[df_performance_nb$Type == &quot;Specificity&quot;,]$Performance, na.rm=TRUE)</code></pre>
+<pre><code>## [1] 0.9733681</code></pre>
 <pre class="r"><code>outcome = predict(final_model, combined_df %&gt;% select(-outcome))
 fairness_df = combined_df
 fairness_df$predictions = outcome
