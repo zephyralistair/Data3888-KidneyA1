@@ -26,6 +26,8 @@ We also identified a few most variable target genes related to kidney graft outc
 
 Limitations were found, and future work was suggested as follows: to improve the diversity, transnationality and validity of our data and classifier, to pay more attention to the methods of data collection, including sequencing platform and sample types, to re-design the feature selection algorithm to reduce its time complexity.
 
+In conclusion, our model and findings can serve as a foundation for a more diverse, sensitive yet parsimonious classifier that accurately yet efficiently predicts kidney graft outcomes for the benefit of renal illness patients. Further research in both medicine and statistics can be performed to improve the classifier's performance and identify the selected genes' clinical implications.
+
 
 ```{r setup, include = FALSE}
 ## loading and setup
@@ -310,9 +312,7 @@ feature_p2 + feature_p1
 
 Based on the plots [Fig.3], we can see the most optimal number of genes to include in our final model is 2, and the genes selected most frequently are [BTN3A1](https://www.genecards.org/cgi-bin/carddisp.pl?gene=BTN3A1) and [STAT1](https://www.genecards.org/cgi-bin/carddisp.pl?gene=STAT1). Further investigation can be performed to find the clinical implications of these genes.
 
-Eventually, we built models that contain age, gender, and the two most variable gene expression values ([SLC22A14](https://www.genecards.org/cgi-bin/carddisp.pl?gene=SLC22A14), [TAP2](https://www.genecards.org/cgi-bin/carddisp.pl?gene=TAP2)) as variables, using multiple supervised machine learning algorithms.
-
-Note to allow the model to be tested on the other two independent datasets, these two most variable genes (SLC22A14, TAP2) were selected from the intersection of the three datasets. [Appendix Fig.6]
+Eventually, as we knew including two genes was the best decision, we began to build models that contain age, gender, and the two most variable gene expression values ([SLC22A14](https://www.genecards.org/cgi-bin/carddisp.pl?gene=SLC22A14), [TAP2](https://www.genecards.org/cgi-bin/carddisp.pl?gene=TAP2)) as variables, using multiple supervised machine learning algorithms. Note to allow the model to be tested on the other two independent datasets, these two most variable genes (SLC22A14, TAP2) were selected from the intersection of the three datasets. A Venn diagram describing the process can be found in the appendix [Appendix Fig.6].
 
 ```{r intersection, results='hide', message=F, warning=F}
 ## select top 2 genes from the intersection
@@ -360,7 +360,7 @@ Five algorithms were used for training on GSE1563, namely 6-Nearest Neighbor, Na
 We then compared the five models by repeated Cross-Validation. The boxplots [Fig.4] of 5 classifiers' accuracies, sensitivities and specificities suggested the Weighted Logistic Regression classifier (LR) had the best sensitivity, and the Naïve Bayes classifier (NB) had the best accuracy and specificity. Here, evaluations were performed based on both the mean and the variance of the performance metrics. Note that all classifiers performed poorly in sensitivity, indicating our model was relatively accurate and good at classifying true stables, yet poor at true rejections.
 
 ```{r repeated_cv, warning=F, cache=T, fig.asp=0.618, fig.cap="Fig.4 5 Classifiers' repeated CV performances"}
-set.seed(3888)
+set.seed(seed)
 
 ## own-defined functions for performances
 accuracy <- function(true, predicted) {
@@ -666,15 +666,17 @@ In conclusion, our final Naïve Bayes model had an accuracy, a sensitivity and a
 
 ## 5. Main Product - a [Shiny APP](https://zephyralistair.shinyapps.io/DATA3888_KidneyA1/)
 
-We then deployed our final classifier using an R package Shiny. We designed the app to make our target audience of doctors easy to predict and interpret the patient's kidney graft outcome. We divided the app into three parts.
+We then deployed our final classifier using an R package Shiny. We designed the app to make our target audience of doctors easy to predict and interpret the patient's kidney graft outcome. We only included information that a doctor would be interested in and be able to understand, such as a functionality summary of the genes we selected while omitting statistical details.
+
+We divided the app into three parts:
 
 The first part of the app introduces the app and its parameter descriptions. As a result, doctors can better understand the purpose of our app and the source of data while getting familiar with what to input.
 
 In the second part, we included a summary of the genes selected (TAP2, SLC22A14). A brief introduction to the functionality of these genes was cited from [GeneCards](https://www.genecards.org/).
 
-The third part is the predictor. The doctor can obtain the patient's kidney graft outcome by inputting the patient's gender, age, and two gene expression values, "TAP2" and "SLC22A14".
+The third part is the predictor. The doctor can obtain the patient's kidney graft outcome by inputting the patient's gender, age, and two gene expression values, "TAP2" and "SLC22A14". We included accuracy, sensitivity, and specificity performances below the predictions to help the doctor understand how reliable our prediction is. These terminologies are no stranger to a doctor. And for the CV, which a doctor might not understand, we attached a Wikipedia link.
 
-## 6. Conclusions and Limitations
+## 6. Discussion and Conclusion
 
 As a result of our investigations, we have found an accurate, stable and fair yet parsimonious Naïve Bayes model for predicting kidney graft outcomes by age, gender and two gene expression values (SLC22A14, TAP2), which is good at identifying stable outcomes. By allowing doctors to predict their patients' kidney graft outcomes conveniently, our model could potentially expand the usage of kidney transplantation to save more lives and reduce the prevalence of kidney-transplantation-related diseases.
 
@@ -690,12 +692,17 @@ We were also unaware of the methods of collection of these data. If they were co
 
 As for the high time complexity in the feature selection CV, we need to re-design our algorithm. For the model itself, improving its sensitivity performance can serve as the main focus of study in the future.
 
-## References
+In conclusion, our model and findings can serve as a foundation for a more diverse, sensitive yet parsimonious classifier that accurately yet efficiently predicts kidney graft outcomes for the benefit of renal illness patients. Further research in both medicine and statistics can be performed to improve the classifier's performance and identify the selected genes' clinical implications.
 
-<div id="refs"></div>
+## Student Contributions
+
+Individual contributions are provided below as a table. Detailed statement can be found in [Canvas group - Discussions - Group contributions](https://canvas.sydney.edu.au/groups/325344/discussion_topics/871243).
+```{r contributions, message=F}
+contributions = read_csv("Group Contributions.csv")
+contributions %>% kable(caption = "Table.2 Group Contributions")
+```
 
 ## Appendix
-
 
 ### Other Figures
 ```{r IDA, fig.asp=0.25, fig.cap="Fig.5 Boxplots of gene expression values"}
@@ -728,15 +735,7 @@ acc_parity(data    = fairness_df,
 
 ### Links
 
-Our collaboration platform was [GitHub](https://github.com/zephyralistair/Data3888-KidneyA1). Our product was deployed at [shinyapps](https://zephyralistair.shinyapps.io/DATA3888_KidneyA1/).
-
-### Contributions
-
-Individual contributions are provided below as a table. Detailed statement can be found in [Canvas group - Discussions - Group contributions](https://canvas.sydney.edu.au/groups/325344/discussion_topics/871243).
-```{r contributions, message=F}
-contributions = read_csv("Group Contributions.csv")
-contributions %>% kable(caption = "Table.2 Group Contributions")
-```
+All of our historical commits and code can be found on [GitHub](https://github.com/zephyralistair/Data3888-KidneyA1). Our product was deployed at [shinyapps.io](https://zephyralistair.shinyapps.io/DATA3888_KidneyA1/).
 
 ### Package Versions
 
@@ -745,3 +744,5 @@ Package versions used in this project are listed below.
 ```{r package_version}
 sessionInfo()
 ```
+
+## References
