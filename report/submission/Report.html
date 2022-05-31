@@ -5,8 +5,9 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="generator" content="pandoc" />
 
-        <meta name="author" content="KidneyA1: Qinlin(Alistair) Gu, Danning Sun, Hangyi Wu, Xuening Ni, Yuye(Giri) Zhou" />
+        <meta name="author" content="KidneyA1: Qinlin(Alistair) Gu, Danying Sun, Hangyi Wu, Xuening Ni, Yuye(Giri) Zhou" />
     
+        <meta name="date" content="2022-05-31" />
     
     <title>Building a Kidney Graft Outcome Predictor Using Top 2 Gene Expression Values, Gender and Age</title>
 
@@ -150,9 +151,9 @@
       <h1 class="title">Building a Kidney Graft Outcome Predictor Using Top 2 Gene Expression Values, Gender and Age</h1>
       
       <p class="authors">
-           <span class="glyphicon glyphicon-user"></span> KidneyA1: Qinlin(Alistair) Gu, Danning Sun, Hangyi Wu, Xuening Ni, Yuye(Giri) Zhou
+           <span class="glyphicon glyphicon-user"></span> KidneyA1: Qinlin(Alistair) Gu, Danying Sun, Hangyi Wu, Xuening Ni, Yuye(Giri) Zhou
       </p>
-         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2022/5/30</p>
+         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2022-05-31</p>
            
 
    
@@ -162,7 +163,7 @@
 <div class="page-content has-page-title">
 <div id="executive-summary" class="section level2">
 <h2>Executive Summary</h2>
-<p>Kidney transplantation is one of the most successful treatments to improve the quality of life of individuals with end-stage renal illnesses <span class="citation">(Garcia, Harden, and Chapman 2012)</span>. Yet it is limited due to risks and rejection. To use gene expression values to predict the outcome of kidney graft, in this project, we aimed to design an accurate yet parsimonious predictor of kidney transplantation outcomes for doctors that includes gene expression values as variables.</p>
+<p>Kidney transplantation is one of the most successful treatments to improve the quality of life of individuals with end-stage renal illnesses <span class="citation">(Garcia, Harden, &amp; Chapman, 2012)</span>. Yet it is limited due to risks and rejection. To use gene expression values to predict the outcome of kidney graft, in this project, we aimed to design an accurate yet parsimonious predictor of kidney transplantation outcomes for doctors that includes gene expression values as variables.</p>
 <p>We selected GSE51675, GSE1563 and GSE46474 from the 58 Gene Expression Omnibus (GEO) datasets provided. After cleaning, transforming and scaling, we used GSE1563 as our training set and the other two as our testing set. These datasets included age, gender and gene expression values.</p>
 <p>We then identified the most optimal number of genes to include in our final model by differential expression (DE) analysis in repeated cross-validation (CV). We compared the accuracy of models containing 2 - 50 top genes selected by DE analysis in each CV iteration. We found the most optimal number of this CV iteration when the accuracy is the highest. Eventually, a list of the most optimal numbers and selected genes were generated. The most frequently used optimal number is 2, and a few most commonly included genes are BTN3A1, STAT1, CD163 and TBC1D2B.</p>
 <p>Afterwards, we trained five classifiers using age, gender and 2 top genes selected by DE analysis from the intersection of the three datasets, including 6-Nearest Neighbor, Naïve Bayes, Random Forest, Support Vector Machine and Weighted Logistic Regression. After testing accuracy, sensitivity and specificity performances using in-sample repeated CV and on independent datasets, and also evaluating model stability, classifier fairness and computation cost, we selected the Naïve Bayes classifier as our final model and deployed it on a Shiny app. Our final Naïve Bayes model had an accuracy, a sensitivity and a specificity of <span class="math inline">\((88\%, 61\%, 97\%)\)</span> in training set repeated CV, and <span class="math inline">\((61\%, 22\%, 100\%)\)</span>, <span class="math inline">\((65\%, 35\%, 95\%)\)</span> on independent datasets. It was both stable and fair, and its computational cost was small.</p>
@@ -173,7 +174,7 @@
 </div>
 <div id="introduction" class="section level2">
 <h2>1. Introduction</h2>
-<p>Kidney transplantation is one of the most successful treatments to improve the quality of life of individuals with end-stage renal illness <span class="citation">(Garcia, Harden, and Chapman 2012)</span>. Although kidney transplantation can treat severe kidney disease, it is limited and not frequently utilized due to risks and rejection. With the use and development of genetic sequencing analysis techniques, different gene expression values can be used to predict the outcome of kidney transplantation. The expression value of a gene in RNAseq data analysis represents how much it is expressed in a cell.</p>
+<p>Kidney transplantation is one of the most successful treatments to improve the quality of life of individuals with end-stage renal illness <span class="citation">(Garcia, Harden, &amp; Chapman, 2012)</span>. Although kidney transplantation can treat severe kidney disease, it is limited and not frequently utilized due to risks and rejection. With the use and development of genetic sequencing analysis techniques, different gene expression values can be used to predict the outcome of kidney transplantation. The expression value of a gene in RNAseq data analysis represents how much it is expressed in a cell.</p>
 <p>To that end, in this project, we aimed to design an accurate yet parsimonious predictor of kidney transplantation outcomes for doctors that could be used in various datasets. In particular, the model we trained should be easy to use and interpret for a doctor and should contain gene expression values as variables. We planned to <a href="https://zephyralistair.shinyapps.io/DATA3888_KidneyA1/">deploy</a> our model by an R package Shiny for demonstration.</p>
 <p>An overview of our workflow is provided below [Fig.1].</p>
 <pre class="r"><code>## include a flow chart generated at ProcessOn
@@ -302,7 +303,7 @@ volcano_p1 + volcano_p2 + volcano_p3</code></pre>
 Fig.2 Volcano plots
 </p>
 </div>
-<p>However, as we were planning to test our final classifier on other independent datasets and apply it so that whoever is using the classifier shiny app can easily input gene expression values, we must find a way to select only a small number of genes. The technique of pre-validation like we did in the assignment was not suitable as it was both inappropriate to be used as an input and challenging to test on other independent datasets. On the other hand, it was possible to use only a handful of or even fewer genes to build an accurate and robust parsimonious prediction model, as suggested by some articles <span class="citation">(Han et al. 2022)</span>.</p>
+<p>However, as we were planning to test our final classifier on other independent datasets and apply it so that whoever is using the classifier shiny app can easily input gene expression values, we must find a way to select only a small number of genes. The technique of pre-validation like we did in the assignment was not suitable as it was both inappropriate to be used as an input and challenging to test on other independent datasets. On the other hand, it was possible to use only a handful of or even fewer genes to build an accurate and robust parsimonious prediction model, as suggested by some articles <span class="citation">(Han et al., 2022)</span>.</p>
 <p>We decided on the optimal number of genes selected by performing differential expression (DE) analysis in repeated cross-validation (CV). [Flowchart in Fig.1] We compared the accuracy of models containing 2 - 50 top genes selected by DE analysis in each CV iteration. We found the most optimal number of this CV iteration when the accuracy is the highest. Eventually, a list of the most optimal numbers and selected genes were generated.</p>
 <pre class="r"><code>set.seed(seed)
 
@@ -1015,132 +1016,132 @@ Fig.7 NB accuracy parity metric plot
 </div>
 <div id="references" class="section level2 unnumbered">
 <h2 class="unnumbered">References</h2>
-<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="refs" class="references csl-bib-body hanging-indent" line-spacing="2">
 <div id="ref-R-cvTools" class="csl-entry">
-Alfons, Andreas. 2012. <em>cvTools: Cross-Validation Tools for Regression Models</em>. <a href="https://CRAN.R-project.org/package=cvTools">https://CRAN.R-project.org/package=cvTools</a>.
+Alfons, A. (2012). <em>cvTools: Cross-validation tools for regression models</em>. Retrieved from <a href="https://CRAN.R-project.org/package=cvTools">https://CRAN.R-project.org/package=cvTools</a>
 </div>
 <div id="ref-R-rmdformats" class="csl-entry">
-Barnier, Julien. 2022. <em>Rmdformats: HTML Output Formats and Templates for Rmarkdown Documents</em>. <a href="https://github.com/juba/rmdformats">https://github.com/juba/rmdformats</a>.
+Barnier, J. (2022). <em>Rmdformats: HTML output formats and templates for rmarkdown documents</em>. Retrieved from <a href="https://github.com/juba/rmdformats">https://github.com/juba/rmdformats</a>
 </div>
 <div id="ref-R-randomForest" class="csl-entry">
-Breiman, Leo, Adele Cutler, Andy Liaw, and Matthew Wiener. 2022. <em>randomForest: Breiman and Cutler’s Random Forests for Classification and Regression</em>. <a href="https://www.stat.berkeley.edu/~breiman/RandomForests/">https://www.stat.berkeley.edu/~breiman/RandomForests/</a>.
+Breiman, L., Cutler, A., Liaw, A., &amp; Wiener, M. (2022). <em>randomForest: Breiman and cutler’s random forests for classification and regression</em>. Retrieved from <a href="https://www.stat.berkeley.edu/~breiman/RandomForests/">https://www.stat.berkeley.edu/~breiman/RandomForests/</a>
 </div>
 <div id="ref-R-VennDiagram" class="csl-entry">
-Chen, Hanbo. 2022. <em>VennDiagram: Generate High-Resolution Venn and Euler Plots</em>. <a href="https://CRAN.R-project.org/package=VennDiagram">https://CRAN.R-project.org/package=VennDiagram</a>.
+Chen, H. (2022). <em>VennDiagram: Generate high-resolution venn and euler plots</em>. Retrieved from <a href="https://CRAN.R-project.org/package=VennDiagram">https://CRAN.R-project.org/package=VennDiagram</a>
 </div>
 <div id="ref-R-GEOquery" class="csl-entry">
-Davis, Sean. 2022. <em>GEOquery: Get Data from NCBI Gene Expression Omnibus (GEO)</em>. <a href="https://github.com/seandavi/GEOquery">https://github.com/seandavi/GEOquery</a>.
+Davis, S. (2022). <em>GEOquery: Get data from NCBI gene expression omnibus (GEO)</em>. Retrieved from <a href="https://github.com/seandavi/GEOquery">https://github.com/seandavi/GEOquery</a>
 </div>
 <div id="ref-GEOquery2007" class="csl-entry">
-Davis, Sean, and Paul Meltzer. 2007. <span>“GEOquery: A Bridge Between the Gene Expression Omnibus (GEO) and BioConductor.”</span> <em>Bioinformatics</em> 14: 1846–47.
+Davis, S., &amp; Meltzer, P. (2007). GEOquery: A bridge between the gene expression omnibus (GEO) and BioConductor. <em>Bioinformatics</em>, <em>14</em>, 1846–1847.
 </div>
 <div id="ref-garcia_global_2012" class="csl-entry">
-Garcia, Guillermo G., Paul Harden, and Jeremy Chapman. 2012. <span>“The Global Role of Kidney Transplantation:”</span> <em>Current Opinion in Organ Transplantation</em> 17 (4): 362–67. <a href="https://doi.org/10.1097/MOT.0b013e328354c277">https://doi.org/10.1097/MOT.0b013e328354c277</a>.
+Garcia, G. G., Harden, P., &amp; Chapman, J. (2012). The global role of kidney transplantation: <em>Current Opinion in Organ Transplantation</em>, <em>17</em>(4), 362–367. <a href="https://doi.org/10.1097/MOT.0b013e328354c277">https://doi.org/10.1097/MOT.0b013e328354c277</a>
 </div>
 <div id="ref-R-Biobase" class="csl-entry">
-Gentleman, R., V. Carey, M. Morgan, and S. Falcon. 2021. <em>Biobase: Base Functions for Bioconductor</em>. <a href="https://bioconductor.org/packages/Biobase">https://bioconductor.org/packages/Biobase</a>.
+Gentleman, R., Carey, V., Morgan, M., &amp; Falcon, S. (2021). <em>Biobase: Base functions for bioconductor</em>. Retrieved from <a href="https://bioconductor.org/packages/Biobase">https://bioconductor.org/packages/Biobase</a>
 </div>
 <div id="ref-10.3389/fgene.2022.844709" class="csl-entry">
-Han, Qianguang, Xiang Zhang, Xiaohan Ren, Zhou Hang, Yu Yin, Zijie Wang, Hao Chen, et al. 2022. <span>“Biological Characteristics and Predictive Model of Biopsy-Proven Acute Rejection (BPAR) After Kidney Transplantation: Evidences of Multi-Omics Analysis.”</span> <em>Frontiers in Genetics</em> 13. <a href="https://doi.org/10.3389/fgene.2022.844709">https://doi.org/10.3389/fgene.2022.844709</a>.
+Han, Q., Zhang, X., Ren, X., Hang, Z., Yin, Y., Wang, Z., … Ju, X. (2022). Biological characteristics and predictive model of biopsy-proven acute rejection (BPAR) after kidney transplantation: Evidences of multi-omics analysis. <em>Frontiers in Genetics</em>, <em>13</em>. <a href="https://doi.org/10.3389/fgene.2022.844709">https://doi.org/10.3389/fgene.2022.844709</a>
 </div>
 <div id="ref-R-purrr" class="csl-entry">
-Henry, Lionel, and Hadley Wickham. 2020. <em>Purrr: Functional Programming Tools</em>. <a href="https://CRAN.R-project.org/package=purrr">https://CRAN.R-project.org/package=purrr</a>.
+Henry, L., &amp; Wickham, H. (2020). <em>Purrr: Functional programming tools</em>. Retrieved from <a href="https://CRAN.R-project.org/package=purrr">https://CRAN.R-project.org/package=purrr</a>
 </div>
 <div id="ref-Biobase2015" class="csl-entry">
-Huber, W., V. J. Carey, R. Gentleman, S. Anders, M. Carlson, B. S. Carvalho, H. C. Bravo, et al. 2015a. <span>“<span>O</span>rchestrating High-Throughput Genomic Analysis with <span>B</span>ioconductor.”</span> <em>Nature Methods</em> 12 (2): 115–21. <a href="http://www.nature.com/nmeth/journal/v12/n2/full/nmeth.3252.html">http://www.nature.com/nmeth/journal/v12/n2/full/nmeth.3252.html</a>.
+Huber, W., Carey, V. J., Gentleman, R., Anders, S., Carlson, M., Carvalho, B. S., … Morgan, M. (2015a). <span>O</span>rchestrating high-throughput genomic analysis with <span>B</span>ioconductor. <em>Nature Methods</em>, <em>12</em>(2), 115–121. Retrieved from <a href="http://www.nature.com/nmeth/journal/v12/n2/full/nmeth.3252.html">http://www.nature.com/nmeth/journal/v12/n2/full/nmeth.3252.html</a>
 </div>
 <div id="ref-BiocGenerics2015" class="csl-entry">
-Huber, W., Carey, V. J., Gentleman, R., Anders, et al. 2015b. <span>“<span>O</span>rchestrating High-Throughput Genomic Analysis with <span>B</span>ioconductor.”</span> <em>Nature Methods</em> 12 (2): 115–21. <a href="http://www.nature.com/nmeth/journal/v12/n2/full/nmeth.3252.html">http://www.nature.com/nmeth/journal/v12/n2/full/nmeth.3252.html</a>.
+Huber, W., Carey, J., V., Gentleman, R., … M. (2015b). <span>O</span>rchestrating high-throughput genomic analysis with <span>B</span>ioconductor. <em>Nature Methods</em>, <em>12</em>(2), 115–121. Retrieved from <a href="http://www.nature.com/nmeth/journal/v12/n2/full/nmeth.3252.html">http://www.nature.com/nmeth/journal/v12/n2/full/nmeth.3252.html</a>
 </div>
 <div id="ref-R-fairness" class="csl-entry">
-Kozodoi, Nikita, and Tibor V. Varga. 2021. <em>Fairness: Algorithmic Fairness Metrics</em>. <a href="https://kozodoi.me/r/fairness/packages/2020/05/01/fairness-tutorial.html">https://kozodoi.me/r/fairness/packages/2020/05/01/fairness-tutorial.html</a>.
+Kozodoi, N., &amp; V. Varga, T. (2021). <em>Fairness: Algorithmic fairness metrics</em>. Retrieved from <a href="https://kozodoi.me/r/fairness/packages/2020/05/01/fairness-tutorial.html">https://kozodoi.me/r/fairness/packages/2020/05/01/fairness-tutorial.html</a>
 </div>
 <div id="ref-randomForest2002" class="csl-entry">
-Liaw, Andy, and Matthew Wiener. 2002. <span>“Classification and Regression by randomForest.”</span> <em>R News</em> 2 (3): 18–22. <a href="https://CRAN.R-project.org/doc/Rnews/">https://CRAN.R-project.org/doc/Rnews/</a>.
+Liaw, A., &amp; Wiener, M. (2002). Classification and regression by randomForest. <em>R News</em>, <em>2</em>(3), 18–22. Retrieved from <a href="https://CRAN.R-project.org/doc/Rnews/">https://CRAN.R-project.org/doc/Rnews/</a>
 </div>
 <div id="ref-R-naivebayes" class="csl-entry">
-Majka, Michal. 2020. <em>Naivebayes: High Performance Implementation of the Naive Bayes Algorithm</em>. <a href="https://CRAN.R-project.org/package=naivebayes">https://CRAN.R-project.org/package=naivebayes</a>.
+Majka, M. (2020). <em>Naivebayes: High performance implementation of the naive bayes algorithm</em>. Retrieved from <a href="https://CRAN.R-project.org/package=naivebayes">https://CRAN.R-project.org/package=naivebayes</a>
 </div>
 <div id="ref-R-e1071" class="csl-entry">
-Meyer, David, Evgenia Dimitriadou, Kurt Hornik, Andreas Weingessel, and Friedrich Leisch. 2021. <em>E1071: Misc Functions of the Department of Statistics, Probability Theory Group (Formerly: E1071), TU Wien</em>. <a href="https://CRAN.R-project.org/package=e1071">https://CRAN.R-project.org/package=e1071</a>.
+Meyer, D., Dimitriadou, E., Hornik, K., Weingessel, A., &amp; Leisch, F. (2021). <em>e1071: Misc functions of the department of statistics, probability theory group (formerly: E1071), TU wien</em>. Retrieved from <a href="https://CRAN.R-project.org/package=e1071">https://CRAN.R-project.org/package=e1071</a>
 </div>
 <div id="ref-R-tibble" class="csl-entry">
-Müller, Kirill, and Hadley Wickham. 2021. <em>Tibble: Simple Data Frames</em>. <a href="https://CRAN.R-project.org/package=tibble">https://CRAN.R-project.org/package=tibble</a>.
+Müller, K., &amp; Wickham, H. (2021). <em>Tibble: Simple data frames</em>. Retrieved from <a href="https://CRAN.R-project.org/package=tibble">https://CRAN.R-project.org/package=tibble</a>
 </div>
 <div id="ref-R-patchwork" class="csl-entry">
-Pedersen, Thomas Lin. 2020. <em>Patchwork: The Composer of Plots</em>. <a href="https://CRAN.R-project.org/package=patchwork">https://CRAN.R-project.org/package=patchwork</a>.
+Pedersen, T. L. (2020). <em>Patchwork: The composer of plots</em>. Retrieved from <a href="https://CRAN.R-project.org/package=patchwork">https://CRAN.R-project.org/package=patchwork</a>
 </div>
 <div id="ref-R-base" class="csl-entry">
-R Core Team. 2021. <em>R: A Language and Environment for Statistical Computing</em>. Vienna, Austria: R Foundation for Statistical Computing. <a href="https://www.R-project.org/">https://www.R-project.org/</a>.
+R Core Team. (2021). <em>R: A language and environment for statistical computing</em>. Vienna, Austria: R Foundation for Statistical Computing. Retrieved from <a href="https://www.R-project.org/">https://www.R-project.org/</a>
 </div>
 <div id="ref-R-class" class="csl-entry">
-Ripley, Brian. 2022. <em>Class: Functions for Classification</em>. <a href="http://www.stats.ox.ac.uk/pub/MASS4/">http://www.stats.ox.ac.uk/pub/MASS4/</a>.
+Ripley, B. (2022). <em>Class: Functions for classification</em>. Retrieved from <a href="http://www.stats.ox.ac.uk/pub/MASS4/">http://www.stats.ox.ac.uk/pub/MASS4/</a>
 </div>
 <div id="ref-limma2015" class="csl-entry">
-Ritchie, Matthew E, Belinda Phipson, Di Wu, Yifang Hu, Charity W Law, Wei Shi, and Gordon K Smyth. 2015. <span>“<span class="nocase">limma</span> Powers Differential Expression Analyses for <span>RNA</span>-Sequencing and Microarray Studies.”</span> <em>Nucleic Acids Research</em> 43 (7): e47. <a href="https://doi.org/10.1093/nar/gkv007">https://doi.org/10.1093/nar/gkv007</a>.
+Ritchie, M. E., Phipson, B., Wu, D., Hu, Y., Law, C. W., Shi, W., &amp; Smyth, G. K. (2015). <span class="nocase">limma</span> powers differential expression analyses for <span>RNA</span>-sequencing and microarray studies. <em>Nucleic Acids Research</em>, <em>43</em>(7), e47. <a href="https://doi.org/10.1093/nar/gkv007">https://doi.org/10.1093/nar/gkv007</a>
 </div>
 <div id="ref-R-futile.logger" class="csl-entry">
-Rowe, Brian Lee Yung. 2016. <em>Futile.logger: A Logging Utility for r</em>. <a href="https://CRAN.R-project.org/package=futile.logger">https://CRAN.R-project.org/package=futile.logger</a>.
+Rowe, B. L. Y. (2016). <em>Futile.logger: A logging utility for r</em>. Retrieved from <a href="https://CRAN.R-project.org/package=futile.logger">https://CRAN.R-project.org/package=futile.logger</a>
 </div>
 <div id="ref-lattice2008" class="csl-entry">
-Sarkar, Deepayan. 2008. <em>Lattice: Multivariate Data Visualization with r</em>. New York: Springer. <a href="http://lmdvr.r-forge.r-project.org">http://lmdvr.r-forge.r-project.org</a>.
+Sarkar, D. (2008). <em>Lattice: Multivariate data visualization with r</em>. New York: Springer. Retrieved from <a href="http://lmdvr.r-forge.r-project.org">http://lmdvr.r-forge.r-project.org</a>
 </div>
 <div id="ref-R-lattice" class="csl-entry">
-———. 2021. <em>Lattice: Trellis Graphics for r</em>. <a href="http://lattice.r-forge.r-project.org/">http://lattice.r-forge.r-project.org/</a>.
+Sarkar, D. (2021). <em>Lattice: Trellis graphics for r</em>. Retrieved from <a href="http://lattice.r-forge.r-project.org/">http://lattice.r-forge.r-project.org/</a>
 </div>
 <div id="ref-R-limma" class="csl-entry">
-Smyth, Gordon, Yifang Hu, Matthew Ritchie, Jeremy Silver, James Wettenhall, Davis McCarthy, Di Wu, et al. 2022. <em>Limma: Linear Models for Microarray Data</em>. <a href="http://bioinf.wehi.edu.au/limma">http://bioinf.wehi.edu.au/limma</a>.
+Smyth, G., Hu, Y., Ritchie, M., Silver, J., Wettenhall, J., McCarthy, D., … Choi, D. (2022). <em>Limma: Linear models for microarray data</em>. Retrieved from <a href="http://bioinf.wehi.edu.au/limma">http://bioinf.wehi.edu.au/limma</a>
 </div>
 <div id="ref-R-BiocGenerics" class="csl-entry">
-Team, The Bioconductor Dev. 2021. <em>BiocGenerics: S4 Generic Functions Used in Bioconductor</em>. <a href="https://bioconductor.org/packages/BiocGenerics">https://bioconductor.org/packages/BiocGenerics</a>.
+Team, T. B. D. (2021). <em>BiocGenerics: S4 generic functions used in bioconductor</em>. Retrieved from <a href="https://bioconductor.org/packages/BiocGenerics">https://bioconductor.org/packages/BiocGenerics</a>
 </div>
 <div id="ref-robustbase2009" class="csl-entry">
-Todorov, Valentin, and Peter Filzmoser. 2009. <span>“An Object-Oriented Framework for Robust Multivariate Analysis.”</span> <em>Journal of Statistical Software</em> 32 (3): 1–47. <a href="https://www.jstatsoft.org/article/view/v032i03/">https://www.jstatsoft.org/article/view/v032i03/</a>.
+Todorov, V., &amp; Filzmoser, P. (2009). An object-oriented framework for robust multivariate analysis. <em>Journal of Statistical Software</em>, <em>32</em>(3), 1–47. Retrieved from <a href="https://www.jstatsoft.org/article/view/v032i03/">https://www.jstatsoft.org/article/view/v032i03/</a>
 </div>
 <div id="ref-R-robustbase" class="csl-entry">
-Todorov, Valentin, Andreas Ruckstuhl, Matias Salibian-Barrera, Tobias Verbeke, Manuel Koller, and Martin Maechler. 2021. <em>Robustbase: Basic Robust Statistics</em>. <a href="https://robustbase.R-forge.R-project.org/">https://robustbase.R-forge.R-project.org/</a>.
+Todorov, V., Ruckstuhl, A., Salibian-Barrera, M., Verbeke, T., Koller, M., &amp; Maechler, M. (2021). <em>Robustbase: Basic robust statistics</em>. Retrieved from <a href="https://robustbase.R-forge.R-project.org/">https://robustbase.R-forge.R-project.org/</a>
 </div>
 <div id="ref-R-tiff" class="csl-entry">
-Urbanek, Simon, and Kent Johnson. 2022. <em>Tiff: Read and Write TIFF Images</em>. <a href="https://www.rforge.net/tiff/">https://www.rforge.net/tiff/</a>.
+Urbanek, S., &amp; Johnson, K. (2022). <em>Tiff: Read and write TIFF images</em>. Retrieved from <a href="https://www.rforge.net/tiff/">https://www.rforge.net/tiff/</a>
 </div>
 <div id="ref-class2002" class="csl-entry">
-Venables, W. N., and B. D. Ripley. 2002. <em>Modern Applied Statistics with s</em>. Fourth. New York: Springer. <a href="https://www.stats.ox.ac.uk/pub/MASS4/">https://www.stats.ox.ac.uk/pub/MASS4/</a>.
+Venables, W. N., &amp; Ripley, B. D. (2002). <em>Modern applied statistics with s</em> (Fourth). New York: Springer. Retrieved from <a href="https://www.stats.ox.ac.uk/pub/MASS4/">https://www.stats.ox.ac.uk/pub/MASS4/</a>
 </div>
 <div id="ref-ggplot22016" class="csl-entry">
-Wickham, Hadley. 2016. <em>Ggplot2: Elegant Graphics for Data Analysis</em>. Springer-Verlag New York. <a href="https://ggplot2.tidyverse.org">https://ggplot2.tidyverse.org</a>.
+Wickham, H. (2016). <em>ggplot2: Elegant graphics for data analysis</em>. Springer-Verlag New York. Retrieved from <a href="https://ggplot2.tidyverse.org">https://ggplot2.tidyverse.org</a>
 </div>
 <div id="ref-R-stringr" class="csl-entry">
-———. 2019. <em>Stringr: Simple, Consistent Wrappers for Common String Operations</em>. <a href="https://CRAN.R-project.org/package=stringr">https://CRAN.R-project.org/package=stringr</a>.
+Wickham, H. (2019). <em>Stringr: Simple, consistent wrappers for common string operations</em>. Retrieved from <a href="https://CRAN.R-project.org/package=stringr">https://CRAN.R-project.org/package=stringr</a>
 </div>
 <div id="ref-R-forcats" class="csl-entry">
-———. 2021a. <em>Forcats: Tools for Working with Categorical Variables (Factors)</em>. <a href="https://CRAN.R-project.org/package=forcats">https://CRAN.R-project.org/package=forcats</a>.
+Wickham, H. (2021a). <em>Forcats: Tools for working with categorical variables (factors)</em>. Retrieved from <a href="https://CRAN.R-project.org/package=forcats">https://CRAN.R-project.org/package=forcats</a>
 </div>
 <div id="ref-R-tidyverse" class="csl-entry">
-———. 2021b. <em>Tidyverse: Easily Install and Load the Tidyverse</em>. <a href="https://CRAN.R-project.org/package=tidyverse">https://CRAN.R-project.org/package=tidyverse</a>.
+Wickham, H. (2021b). <em>Tidyverse: Easily install and load the tidyverse</em>. Retrieved from <a href="https://CRAN.R-project.org/package=tidyverse">https://CRAN.R-project.org/package=tidyverse</a>
 </div>
 <div id="ref-tidyverse2019" class="csl-entry">
-Wickham, Hadley, Mara Averick, Jennifer Bryan, Winston Chang, Lucy D’Agostino McGowan, Romain Francois, Garrett Grolemund, et al. 2019. <span>“Welcome to the <span class="nocase">tidyverse</span>.”</span> <em>Journal of Open Source Software</em> 4 (43): 1686. <a href="https://doi.org/10.21105/joss.01686">https://doi.org/10.21105/joss.01686</a>.
+Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L. D., Francois, R., … Yutani, H. (2019). Welcome to the <span class="nocase">tidyverse</span>. <em>Journal of Open Source Software</em>, <em>4</em>(43), 1686. <a href="https://doi.org/10.21105/joss.01686">https://doi.org/10.21105/joss.01686</a>
 </div>
 <div id="ref-R-ggplot2" class="csl-entry">
-Wickham, Hadley, Winston Chang, Lionel Henry, Thomas Lin Pedersen, Kohske Takahashi, Claus Wilke, Kara Woo, Hiroaki Yutani, and Dewey Dunnington. 2021. <em>Ggplot2: Create Elegant Data Visualisations Using the Grammar of Graphics</em>. <a href="https://CRAN.R-project.org/package=ggplot2">https://CRAN.R-project.org/package=ggplot2</a>.
+Wickham, H., Chang, W., Henry, L., Pedersen, T. L., Takahashi, K., Wilke, C., … Dunnington, D. (2021). <em>ggplot2: Create elegant data visualisations using the grammar of graphics</em>. Retrieved from <a href="https://CRAN.R-project.org/package=ggplot2">https://CRAN.R-project.org/package=ggplot2</a>
 </div>
 <div id="ref-R-dplyr" class="csl-entry">
-Wickham, Hadley, Romain Francois, Lionel Henry, and Kirill Muller. 2022. <em>Dplyr: A Grammar of Data Manipulation</em>. <a href="https://CRAN.R-project.org/package=dplyr">https://CRAN.R-project.org/package=dplyr</a>.
+Wickham, H., Francois, R., Henry, L., &amp; Muller, K. (2022). <em>Dplyr: A grammar of data manipulation</em>. Retrieved from <a href="https://CRAN.R-project.org/package=dplyr">https://CRAN.R-project.org/package=dplyr</a>
 </div>
 <div id="ref-R-tidyr" class="csl-entry">
-Wickham, Hadley, and Maximilian Girlich. 2022. <em>Tidyr: Tidy Messy Data</em>. <a href="https://CRAN.R-project.org/package=tidyr">https://CRAN.R-project.org/package=tidyr</a>.
+Wickham, H., &amp; Girlich, M. (2022). <em>Tidyr: Tidy messy data</em>. Retrieved from <a href="https://CRAN.R-project.org/package=tidyr">https://CRAN.R-project.org/package=tidyr</a>
 </div>
 <div id="ref-R-readr" class="csl-entry">
-Wickham, Hadley, Jim Hester, and Jennifer Bryan. 2022. <em>Readr: Read Rectangular Text Data</em>. <a href="https://CRAN.R-project.org/package=readr">https://CRAN.R-project.org/package=readr</a>.
+Wickham, H., Hester, J., &amp; Bryan, J. (2022). <em>Readr: Read rectangular text data</em>. Retrieved from <a href="https://CRAN.R-project.org/package=readr">https://CRAN.R-project.org/package=readr</a>
 </div>
 <div id="ref-knitr2014" class="csl-entry">
-Xie, Yihui. 2014. <span>“Knitr: A Comprehensive Tool for Reproducible Research in <span>R</span>.”</span> In <em>Implementing Reproducible Computational Research</em>, edited by Victoria Stodden, Friedrich Leisch, and Roger D. Peng. Chapman; Hall/CRC. <a href="http://www.crcpress.com/product/isbn/9781466561595">http://www.crcpress.com/product/isbn/9781466561595</a>.
+Xie, Y. (2014). Knitr: A comprehensive tool for reproducible research in <span>R</span>. In V. Stodden, F. Leisch, &amp; R. D. Peng (Eds.), <em>Implementing reproducible computational research</em>. Chapman; Hall/CRC. Retrieved from <a href="http://www.crcpress.com/product/isbn/9781466561595">http://www.crcpress.com/product/isbn/9781466561595</a>
 </div>
 <div id="ref-knitr2015" class="csl-entry">
-———. 2015. <em>Dynamic Documents with <span>R</span> and Knitr</em>. 2nd ed. Boca Raton, Florida: Chapman; Hall/CRC. <a href="https://yihui.org/knitr/">https://yihui.org/knitr/</a>.
+Xie, Y. (2015). <em>Dynamic documents with <span>R</span> and knitr</em> (2nd ed.). Boca Raton, Florida: Chapman; Hall/CRC. Retrieved from <a href="https://yihui.org/knitr/">https://yihui.org/knitr/</a>
 </div>
 <div id="ref-R-knitr" class="csl-entry">
-———. 2021. <em>Knitr: A General-Purpose Package for Dynamic Report Generation in r</em>. <a href="https://yihui.org/knitr/">https://yihui.org/knitr/</a>.
+Xie, Y. (2021). <em>Knitr: A general-purpose package for dynamic report generation in r</em>. Retrieved from <a href="https://yihui.org/knitr/">https://yihui.org/knitr/</a>
 </div>
 </div>
 </div>

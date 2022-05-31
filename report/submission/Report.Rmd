@@ -1,13 +1,14 @@
 ---
 title: "Building a Kidney Graft Outcome Predictor Using Top 2 Gene Expression Values, Gender and Age"
 author: 'KidneyA1: Qinlin(Alistair) Gu, Danying Sun, Hangyi Wu, Xuening Ni, Yuye(Giri) Zhou'
-date: "2022/5/30"
+date: '`r format(Sys.Date())`'
 output: 
   rmdformats::downcute:
     fig_caption: yes
     code_folding: hide
 bibliography: [citations.bib, packages.bib]
 nocite: '@*'
+csl: apa-6th-edition.csl
 ---
 
 ## Executive Summary
