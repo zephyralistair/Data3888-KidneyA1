@@ -12,5 +12,6 @@ Our group's report is Report.html, which is fully reproducible by knitting Repor
 * Other folders: 		Cache for the RMD
 
 ## Important Note:
-This assignment's instructions were contradictory and unclear, and we were not able to receive anything helpful from Ed. We initially considered creating a PDF report which was much more academic. However, we eventually chose to submit a RMD with embedded code for discreet reasons, which seemed to be a safer decision.
-GitHub and Shiny links are attached in the Appendix.
+* This assignment's instructions were contradictory and unclear, and we were not able to receive anything helpful from Ed. We initially considered creating a PDF report which was much more academic. However, we eventually chose to submit an RMD with embedded code for discreet reasons, which seemed to be a safer decision. And we didn't put code in the Appendix because we believed that would prevent the report from being reproducible and because embedded code seemed to be a good choice.
+* GitHub and Shiny links are attached in the Appendix.
+* There is a dark mode in the HTML.

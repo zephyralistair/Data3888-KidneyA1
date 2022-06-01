@@ -360,6 +360,8 @@ Five algorithms were used for training on GSE1563, namely 6-Nearest Neighbor, Na
 
 We then compared the five models by repeated Cross-Validation. The boxplots [Fig.4] of 5 classifiers' accuracies, sensitivities and specificities suggested the Weighted Logistic Regression classifier (LR) had the best sensitivity, and the Naïve Bayes classifier (NB) had the best accuracy and specificity. Here, evaluations were performed based on both the mean and the variance of the performance metrics. Note that all classifiers performed poorly in sensitivity, indicating our model was relatively accurate and good at classifying true stables, yet poor at true rejections.
 
+We chose these metrics because we had an equally strong emphasis on predicting both true stables and true rejections. We wanted to treat as many patients with renal diseases as possible while minimizing rejection risks. Thus, we were interested in accuracy, sensitivity and specificity.
+
 ```{r repeated_cv, warning=F, cache=T, fig.asp=0.618, fig.cap="Fig.4 5 Classifiers' repeated CV performances"}
 set.seed(seed)
 

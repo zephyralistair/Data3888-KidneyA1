@@ -7,7 +7,7 @@
 
         <meta name="author" content="KidneyA1: Qinlin(Alistair) Gu, Danying Sun, Hangyi Wu, Xuening Ni, Yuye(Giri) Zhou" />
     
-        <meta name="date" content="2022-05-31" />
+        <meta name="date" content="2022-06-01" />
     
     <title>Building a Kidney Graft Outcome Predictor Using Top 2 Gene Expression Values, Gender and Age</title>
 
@@ -153,7 +153,7 @@
       <p class="authors">
            <span class="glyphicon glyphicon-user"></span> KidneyA1: Qinlin(Alistair) Gu, Danying Sun, Hangyi Wu, Xuening Ni, Yuye(Giri) Zhou
       </p>
-         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2022-05-31</p>
+         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2022-06-01</p>
            
 
    
@@ -448,6 +448,7 @@ for (i in 3: (length(combined_df) - 1)) {
 }</code></pre>
 <p>Five algorithms were used for training on GSE1563, namely 6-Nearest Neighbor, Naïve Bayes, Random Forest, Support Vector Machine and Weighted Logistic Regression. Gene expression values in the training set were given a weight multiplier of 0.5 to reduce their power compared to other parameters.</p>
 <p>We then compared the five models by repeated Cross-Validation. The boxplots [Fig.4] of 5 classifiers’ accuracies, sensitivities and specificities suggested the Weighted Logistic Regression classifier (LR) had the best sensitivity, and the Naïve Bayes classifier (NB) had the best accuracy and specificity. Here, evaluations were performed based on both the mean and the variance of the performance metrics. Note that all classifiers performed poorly in sensitivity, indicating our model was relatively accurate and good at classifying true stables, yet poor at true rejections.</p>
+<p>We chose these metrics because we had an equally strong emphasis on predicting both true stables and true rejections. We wanted to treat as many patients with renal diseases as possible while minimizing rejection risks. Thus, we were interested in accuracy, sensitivity and specificity.</p>
 <pre class="r"><code>set.seed(seed)
 
 ## own-defined functions for performances
